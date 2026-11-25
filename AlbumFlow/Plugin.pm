@@ -20,10 +20,6 @@ use base qw(Slim::Plugin::Base);
 
 use Slim::Utils::Log;
 use Slim::Utils::Cache;
-use Slim::Utils::Prefs;
-
-my $prefs = preferences('plugin.albumflow');
-$prefs->init({ tidalStreamFix => 0, tidalAiFlag => 0 });
 
 my $log = Slim::Utils::Log->addLogCategory({
 	category     => 'plugin.albumflow',
@@ -37,11 +33,6 @@ my %favsCache;   # TIDAL userId -> { ts => time, tracks => [...] }
 sub initPlugin {
 	my $class = shift;
 	$class->SUPER::initPlugin(@_);
-
-	if (main::WEBUI) {
-		require Plugins::AlbumFlow::Settings;
-		Plugins::AlbumFlow::Settings->new;
-	}
 
 	Slim::Control::Request::addDispatch(['albumflow', 'tidalfavs'], [1, 1, 1, \&_tidalFavs]);
 	Slim::Control::Request::addDispatch(['albumflow', 'tidalplay'], [1, 0, 1, \&_tidalPlay]);
@@ -66,11 +57,6 @@ sub _tidalAi {
 	my @ids = grep { /^\d+$/ } split /,/, ($request->getParam('ids') || '');
 	if (!$api || !@ids) {
 		$request->setStatusBadParams;
-		return;
-	}
-	if (!$prefs->get('tidalAiFlag')) {   # AI flag is opt-in (settings page)
-		$request->addResult(ai => '');
-		$request->setStatusDone;
 		return;
 	}
 	$request->setStatusProcessing;
@@ -135,11 +121,6 @@ sub _tidalFav {
 		my $isFav = (grep { $_->{id} eq $id } @$tracks) ? 1 : 0;
 		if (!defined $set || $set == $isFav) {
 			$request->addResult(fav => $isFav);
-			if (!$prefs->get('tidalAiFlag')) {
-				$request->addResult(ai => 0);
-				$request->setStatusDone;
-				return;
-			}
 			_aiFlags($api, [$id], sub {
 				$request->addResult(ai => $_[0]->{$id} ? 1 : 0);
 				$request->setStatusDone;
@@ -212,84 +193,6 @@ sub _tidalRadio {
 	}, $id);
 }
 
-# TIDAL streaming without transcoding (2026-11-23, user's choice: "downgrade instead of transcode")
-#
-# 1. The TIDAL plugin forces flc->flc transcoding for ip3k players (Classic, Boom, ...). While the
-#    player buffer is full the transcoding pipeline stops reading the TIDAL stream (Lyrion's
-#    "Buffered" mode does not help with a pipeline), the CDN resets the idle connection after
-#    ~20 s and the track ends after ~50 s. These players decode 16/44.1 FLAC natively, so the
-#    forced transcoding is switched off.
-# 2. With quality HI_RES (24 bit, up to 192 kHz) a player that cannot play that natively would
-#    again need transcoding (resampling). Instead we ask TIDAL for the LOSSLESS (16/44.1) stream
-#    for every player whose max sample rate is below 192 kHz. Players that can do it get Hi-Res.
-our $DOWNGRADE = 0;
-
-sub _wantsLossless {
-	my $client = shift or return 0;
-	my $max = eval { $client->maxSupportedSamplerate } || 48000;
-	return $max < 192000 ? 1 : 0;
-}
-
-sub postinitPlugin {
-	return unless Slim::Utils::PluginManager->isEnabled('Plugins::TIDAL::Plugin');
-	eval {
-		require Plugins::TIDAL::ProtocolHandler;
-		require Plugins::TIDAL::API;
-		require Plugins::TIDAL::API::Async;
-		no strict 'refs';
-		no warnings 'redefine';
-
-		# opt-in (settings page): keep TIDAL's "ai" flag (AI generated track) in the
-		# cached track metadata, the TIDAL plugin drops it
-		if ($prefs->get('tidalAiFlag') and my $origMeta = Plugins::TIDAL::API->can('cacheTrackMetadata')) {
-			*{'Plugins::TIDAL::API::cacheTrackMetadata'} = sub {
-				my ($class, $tracks) = @_;
-				my %ai = map {
-					my $e = ref $_ && $_->{item} ? $_->{item} : $_;
-					ref $e && defined $e->{id} ? ($e->{id} => ($e->{ai} ? 1 : 0)) : ();
-				} @{ ref $tracks eq 'ARRAY' ? $tracks : [] };
-				my $result = $origMeta->(@_);
-				if (%ai && ref $result eq 'ARRAY') {
-					my $cache = Slim::Utils::Cache->new;
-					foreach my $meta (grep { ref $_ && defined $_->{id} } @$result) {
-						next if !exists $ai{$meta->{id}} || (defined $meta->{ai} && $meta->{ai} == $ai{$meta->{id}});
-						$meta->{ai} = $ai{$meta->{id}};
-						$cache->set('tidal_meta_' . $meta->{id}, $meta, time() + 90 * 86400);
-					}
-				}
-				return $result;
-			};
-		}
-
-		# opt-in (settings page): no transcoding pipeline for TIDAL; players below 192 kHz
-		# get LOSSLESS instead of HI_RES (fixes the ~50 s cutoff on Boom/Classic)
-		if ($prefs->get('tidalStreamFix')) {
-		*{'Plugins::TIDAL::ProtocolHandler::forceTranscode'} = sub { 0 };
-
-		# getNextTrack asks for the stream URL synchronously (first achain step), so a
-		# dynamically scoped flag tells getTrackUrl which player the request is for
-		if (my $origNext = Plugins::TIDAL::ProtocolHandler->can('getNextTrack')) {
-			*{'Plugins::TIDAL::ProtocolHandler::getNextTrack'} = sub {
-				my ($class, $song) = @_;
-				local $DOWNGRADE = _wantsLossless($song && $song->master);
-				return $origNext->(@_);
-			};
-		}
-		if (my $origUrl = Plugins::TIDAL::API::Async->can('getTrackUrl')) {
-			*{'Plugins::TIDAL::API::Async::getTrackUrl'} = sub {
-				my ($self, $cb, $id, $params) = @_;
-				if ($DOWNGRADE && ref $params eq 'HASH' && ($params->{audioquality} || '') eq 'HI_RES') {
-					$params = { %$params, audioquality => 'LOSSLESS' };
-					$log->is_info && $log->info("TIDAL track $id: LOSSLESS instead of HI_RES for this player");
-				}
-				return $origUrl->($self, $cb, $id, $params);
-			};
-		}
-		}
-		1;
-	} or $log->error("Could not adjust TIDAL streaming: $@");
-}
-
 sub _noAccount {
 	my $request = shift;
 	$request->addResult(error => 'No TIDAL account');
@@ -304,7 +207,7 @@ sub _addTrackRows {
 		next unless $t && $t->{id};
 		$request->addResultLoop('tracks_loop', $i, 'id', $t->{id});
 		$request->addResultLoop('tracks_loop', $i, 'title', $t->{title} // '');
-		$request->addResultLoop('tracks_loop', $i, 'ai', 1) if $t->{ai} && $prefs->get('tidalAiFlag');
+		$request->addResultLoop('tracks_loop', $i, 'ai', 1) if $t->{ai};
 		my $artist = ref $t->{artist} ? $t->{artist}->{name} : $t->{artist};
 		$request->addResultLoop('tracks_loop', $i, 'artist', $artist) if $artist;
 		$request->addResultLoop('tracks_loop', $i, 'duration', $t->{duration}) if $t->{duration};
@@ -434,7 +337,7 @@ sub _tidalPlaylistTracks {
 			next unless $t && $t->{id};
 			$request->addResultLoop('tracks_loop', $i, 'id', $t->{id});
 			$request->addResultLoop('tracks_loop', $i, 'title', $t->{title} // '');
-			$request->addResultLoop('tracks_loop', $i, 'ai', 1) if $t->{ai} && $prefs->get('tidalAiFlag');
+			$request->addResultLoop('tracks_loop', $i, 'ai', 1) if $t->{ai};
 			my $artist = ref $t->{artist} ? $t->{artist}->{name} : $t->{artist};
 			$request->addResultLoop('tracks_loop', $i, 'artist', $artist) if $artist;
 			$request->addResultLoop('tracks_loop', $i, 'cover', $t->{cover}) if $t->{cover} && $t->{cover} =~ /^https?:/;
@@ -516,7 +419,7 @@ sub _tidalAlbum {
 			next unless $t && $t->{id};
 			$request->addResultLoop('tracks_loop', $i, 'id', $t->{id});
 			$request->addResultLoop('tracks_loop', $i, 'title', $t->{title} // '');
-			$request->addResultLoop('tracks_loop', $i, 'ai', 1) if $t->{ai} && $prefs->get('tidalAiFlag');
+			$request->addResultLoop('tracks_loop', $i, 'ai', 1) if $t->{ai};
 			$request->addResultLoop('tracks_loop', $i, 'duration', $t->{duration}) if $t->{duration};
 			$request->addResultLoop('tracks_loop', $i, 'tracknum', $t->{tracknum}) if $t->{tracknum};
 			$request->addResultLoop('tracks_loop', $i, 'disc', $t->{disc}) if $t->{disc};

@@ -4,7 +4,7 @@
 		<title lang="EN">AlbumFlow (beta)</title>
 	</details>
 	<plugins>
-		<plugin name="AlbumFlow" version="0.9.0" minTarget="8.0" maxTarget="*">
+		<plugin name="AlbumFlow" version="0.9.1" minTarget="8.0" maxTarget="*">
 			<title lang="EN">AlbumFlow (beta)</title>
 			<title lang="DE">AlbumFlow (Beta)</title>
 			<desc lang="EN">Touch-friendly web interface with a 3D album flow. Open http://&lt;server&gt;:9000/AlbumFlow/ after installing.</desc>
@@ -12,8 +12,8 @@
 			<creator>Stephane Duvoisin</creator>
 			<category>misc</category>
 			<link>https://github.com/trufy/AlbumFlow</link>
-			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.0/AlbumFlow-0.9.0.zip</url>
-			<sha>1088ea065c372de53d4edb7262e928ef93b541e2</sha>
+			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.1/AlbumFlow-0.9.1.zip</url>
+			<sha>13c17b1d9be16fcd52a6c4a9b483c6b1f2396637</sha>
 		</plugin>
 	</plugins>
 </extensions>

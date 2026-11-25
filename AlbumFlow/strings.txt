@@ -9,27 +9,3 @@ PLUGIN_ALBUMFLOW_DESC
 SKIN_ALBUMFLOW
 	DE	AlbumFlow
 	EN	AlbumFlow
-
-PLUGIN_ALBUMFLOW_OPEN
-	DE	AlbumFlow öffnen
-	EN	Open AlbumFlow
-
-PLUGIN_ALBUMFLOW_TIDAL_STREAMFIX
-	DE	TIDAL: Stream statt Transcoding (Squeezebox Boom/Classic)
-	EN	TIDAL: downgrade stream instead of transcoding (Squeezebox Boom/Classic)
-
-PLUGIN_ALBUMFLOW_TIDAL_STREAMFIX_DESC
-	DE	Experimentell. Verhindert, dass TIDAL-Titel auf älteren Squeezeboxen nach ca. 50 Sekunden abbrechen: Player, die kein Hi-Res abspielen können, bekommen den Stream direkt in LOSSLESS statt über eine Transcoding-Pipeline. Greift in das TIDAL-Plugin ein.
-	EN	Experimental. Stops TIDAL tracks cutting out after about 50 seconds on older Squeezeboxes: players that can't play Hi-Res get a LOSSLESS stream directly instead of a transcoding pipeline. Patches the TIDAL plugin.
-
-PLUGIN_ALBUMFLOW_TIDAL_AI
-	DE	TIDAL: AI-Markierung anzeigen
-	EN	TIDAL: show AI flag
-
-PLUGIN_ALBUMFLOW_TIDAL_AI_DESC
-	DE	Experimentell. Zeigt bei Titeln, die TIDAL als AI-generiert markiert, ein „AI“-Badge. Greift in das TIDAL-Plugin ein, um die Markierung im Cache zu behalten.
-	EN	Experimental. Shows an "AI" badge on tracks TIDAL flags as AI generated. Patches the TIDAL plugin to keep the flag in its cache.
-
-PLUGIN_ALBUMFLOW_RESTART_NOTE
-	DE	Änderungen an den TIDAL-Optionen werden nach einem Neustart von Lyrion wirksam.
-	EN	Changes to the TIDAL options take effect after restarting Lyrion.

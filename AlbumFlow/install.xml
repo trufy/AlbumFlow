@@ -3,7 +3,7 @@
 	<id>7678b1f6-9e99-4fb7-b6ca-00c345dad29a</id>
 	<name>PLUGIN_ALBUMFLOW</name>
 	<module>Plugins::AlbumFlow::Plugin</module>
-	<version>0.9.0</version>
+	<version>0.9.1</version>
 	<description>PLUGIN_ALBUMFLOW_DESC</description>
 	<creator>Stephane Duvoisin</creator>
 	<defaultState>enabled</defaultState>

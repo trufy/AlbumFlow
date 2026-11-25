@@ -13,7 +13,7 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 - Collections: albums, by artist, newest, tracks, playlists
 - Search by album or artist
 - Player selection, volume, play/pause/skip, power, large now-playing view (also as a screensaver)
-- Local library and **TIDAL** (via the official TIDAL plugin): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
+- Local library and **TIDAL** (via the official TIDAL plugin, nothing patched): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
 - Embeddable: transparent "glass" theme for dashboards such as Home Assistant (see below)
 - Single self-contained page, no build step, no extra dependencies
 
@@ -30,15 +30,6 @@ AlbumFlow is a normal LMS plugin.
 4. Open `http://<your-server>:9000/AlbumFlow/` in a browser or on a tablet.
 
 Updates arrive through the normal plugin update mechanism.
-
-## Settings
-
-**Settings → Advanced → AlbumFlow** has two optional TIDAL tweaks. Both are **off by default** because they patch the TIDAL plugin at runtime; changes take effect after a Lyrion restart.
-
-| Option | What it does |
-|---|---|
-| TIDAL: downgrade stream instead of transcoding | Fixes TIDAL tracks cutting out after ~50 s on older hardware (Squeezebox Boom / Classic). Players that can't play Hi-Res get a LOSSLESS stream directly instead of a transcoding pipeline. |
-| TIDAL: show AI flag | Shows an "AI" badge on tracks TIDAL flags as AI generated. |
 
 ## URL parameters
 
