@@ -4,7 +4,7 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 
 ![AlbumFlow](docs/flow.png)
 
-> **Beta.** This is the first public test version. Feedback, bug reports and ideas are very welcome. See [Feedback](#feedback).
+> **Beta.** This is the first public test version. Feedback, bug reports and ideas are very welcome: join the discussion in the **[Lyrion forum thread](https://forums.lyrion.org/forum/user-forums/3rd-party-software/1843884-announce-beta-albumflow-%E2%80%93-touch-web-interface-with-a-3d-album-flow)** or open a GitHub issue.
 
 ## Features
 
