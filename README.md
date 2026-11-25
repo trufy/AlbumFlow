@@ -13,7 +13,9 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 - Collections: albums, by artist, newest, tracks, playlists
 - Search by album or artist
 - Player selection, volume, play/pause/skip, power, large now-playing view (also as a screensaver)
-- Local library and **TIDAL** (via the official TIDAL plugin, nothing patched): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
+- **Any source in the flow:** your local library, each virtual library, and every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …). Pick a service under *Source*; its top folders appear under *Collection*, folders open in the flow, albums and playlists flip and play like albums
+- **TIDAL extras** (with the official TIDAL plugin, nothing patched): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
+- English and German interface (follows the browser language)
 - Embeddable: transparent "glass" theme for dashboards such as Home Assistant (see below)
 - Single self-contained page, no build step, no extra dependencies
 
@@ -37,6 +39,7 @@ Updates arrive through the normal plugin update mechanism.
 |---|---|---|
 | `player` | `?player=Kitchen` | Preselect a player by name |
 | `theme=glas` | `?theme=glas` | Transparent glass look without header brand, for embedding |
+| `lang` | `?lang=en` | Interface language, `en` or `de` (default: browser language) |
 | `idle` | `?idle=60` | Seconds without touch before the now-playing screensaver opens (glass theme only; `0` = off, default 30) |
 
 ## Home Assistant
@@ -58,8 +61,9 @@ Happy to share the complete dashboard setup (glass theme, tablet layout): just a
 
 ## Known limitations
 
-- The interface is currently German only; English (and other languages) will follow.
-- Streaming services other than TIDAL are not browsable in the flow yet. Generic support for all services (Qobuz, Spotify, Deezer, …) and for several libraries is planned.
+- Generic service browsing has been tested with TIDAL, YouTube and Sounds & Effects only. Reports for Qobuz, Spotty, Deezer and others are especially welcome.
+- Service search fields are not used yet; the search box filters what is shown in the flow (plus the full TIDAL catalogue for TIDAL).
+- Other languages than English and German are welcome as contributions.
 - Tested with Lyrion 9.x on Windows, TIDAL plugin 1.10, Chrome/Safari/Android WebView.
 
 ## Feedback
