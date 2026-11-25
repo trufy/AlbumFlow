@@ -52,7 +52,7 @@ Updates arrive through the normal plugin update mechanism.
 
 AlbumFlow works nicely on a wall tablet as part of a Home Assistant dashboard, embedded with an iframe card and `?theme=glas` (Home Assistant and Lyrion must both be reached over http, or both over https, or the browser blocks the frame):
 
-<!-- screenshot follows: docs/home-assistant.png -->
+![AlbumFlow in Home Assistant on a wall tablet](docs/home-assistant.png)
 
 ```yaml
 type: iframe
