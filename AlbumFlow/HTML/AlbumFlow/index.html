@@ -1,0 +1,1424 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0b0b0f">
+<title>AlbumFlow</title>
+<script>
+	// ?theme=glas: embedded in Home Assistant (Glas theme), transparent background, no brand
+	if (/[?&]theme=glas\b/.test(location.search)) document.documentElement.className += ' glas';
+</script>
+<style>
+:root {
+	--bg: #0b0b0f;
+	--panel: rgba(28, 28, 34, 0.92);
+	--line: rgba(255, 255, 255, 0.10);
+	--text: #f2f2f5;
+	--muted: #9a9aa6;
+	--accent: #4fc3f7;
+	--accent-ink: #062030;
+	--radius: 14px;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+	font: 15px/1.35 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; }
+button, select, input { font: inherit; color: inherit; }
+button { background: none; border: 0; cursor: pointer; }
+.app { display: grid; grid-template-rows: auto 1fr auto auto; grid-template-columns: minmax(0, 1fr); height: 100%;
+	padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+
+/* Top bar */
+.top { display: flex; gap: 8px; align-items: center; padding: 10px 14px; flex-wrap: wrap; }
+.brand { font-weight: 650; letter-spacing: .2px; margin-right: auto; white-space: nowrap; }
+.brand span { color: var(--accent); }
+.ctl { background-color: rgba(255,255,255,.07); border: 1px solid var(--line); border-radius: 10px; height: 38px; padding: 0 10px; }
+.ctl:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+#search { width: 180px; }
+#player { max-width: 220px; }
+#power { width: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
+#power svg { width: 22px; height: 22px; fill: currentColor; }
+#power.on { color: var(--accent-ink); background: var(--accent); border-color: transparent; }
+#dir { width: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
+#dir svg { width: 22px; height: 22px; fill: currentColor; transition: transform .2s; }
+#dir.on { color: var(--text); }
+#dir.on svg { transform: rotate(180deg); }
+
+/* Stage */
+.stage:focus { outline: none; }
+.stage { position: relative; perspective: 1100px; perspective-origin: 50% 42%; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
+.cover { position: absolute; left: 50%; top: 42%; will-change: transform; transform-style: preserve-3d; border-radius: 6px; }
+.cover img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 6px; background: #22222a;
+	box-shadow: 0 18px 40px rgba(0,0,0,.55);
+	-webkit-box-reflect: below 4px linear-gradient(transparent 62%, rgba(255,255,255,.22)); pointer-events: none; }
+.cover .ph { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 10%;
+	font-weight: 600; color: var(--muted); border-radius: 6px; background: linear-gradient(135deg, #2a2a33, #18181e); }
+.caption { position: absolute; left: 0; right: 0; bottom: 4%; text-align: center; padding: 0 20px; pointer-events: none; }
+.caption .t { font-size: 20px; font-weight: 650; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.caption .a { color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.empty { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); }
+
+/* Scrubber + letters */
+.nav { padding: 2px 16px 8px; }
+#scrub { width: 100%; accent-color: var(--accent); height: 28px; }
+.letters { display: flex; justify-content: space-between; gap: 2px; overflow-x: auto; scrollbar-width: none; }
+.letters::-webkit-scrollbar { display: none; }
+.letters button { min-width: 26px; height: 30px; border-radius: 8px; color: var(--muted); font-size: 13px; font-weight: 600; }
+.letters button.on { color: var(--accent-ink); background: var(--accent); }
+.letters button:disabled { opacity: .25; cursor: default; }
+
+/* Now playing bar */
+.np { display: grid; grid-template-columns: 52px 1fr auto; gap: 12px; align-items: center; margin: 0 10px 10px;
+	padding: 8px 12px 8px 8px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.np img { width: 52px; height: 52px; border-radius: 8px; object-fit: cover; background: #22222a; }
+.np .info { min-width: 0; cursor: pointer; }
+.np .info .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np .info .a { color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.np .btns { display: flex; align-items: center; gap: 4px; }
+.prog { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; margin-top: -4px;
+	color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.prog span { min-width: 36px; }
+.prog span:last-child { text-align: right; }
+#seek { flex: 1; min-width: 0; accent-color: var(--accent); height: 22px; margin: 0; }
+.prog.off { visibility: hidden; } /* keep its height: no layout jump between tracks */
+.ib { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; }
+.ib:hover { background: rgba(255,255,255,.08); }
+.ib svg { width: 26px; height: 26px; fill: currentColor; }
+.ib.big { background: var(--accent); color: var(--accent-ink); }
+/* Volume knob: fine (~4.5 degrees per step), up-ramps slowly, down is immediate */
+.volbox { display: inline-flex; align-items: center; gap: 2px; }
+.ib.sm { width: 32px; height: 32px; color: var(--muted); }
+.ib.sm svg { width: 20px; height: 20px; }
+.knob { --a: 0deg; position: relative; width: 46px; height: 46px; border-radius: 50%; flex: none; cursor: grab; touch-action: none;
+	background: conic-gradient(from -135deg, var(--accent) 0 var(--a), rgba(255,255,255,.14) var(--a) 270deg, transparent 270deg 360deg); }
+.knob .dial { position: absolute; top: 4px; right: 4px; bottom: 4px; left: 4px; border-radius: 50%; background: #2a2347;
+	box-shadow: inset 0 1px 0 rgba(255,255,255,.14), 0 2px 6px rgba(0,0,0,.35); -webkit-transform: rotate(calc(var(--a) - 135deg)); transform: rotate(calc(var(--a) - 135deg)); }
+.knob .dial::after { content: ''; position: absolute; top: 4px; left: 50%; width: 3px; height: 9px; margin-left: -1.5px; border-radius: 2px; background: var(--accent); }
+.knob .kv { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center;
+	font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; pointer-events: none; }
+.knob.busy { cursor: grabbing; }
+
+/* TIDAL emblem */
+.badge { display: inline-block; vertical-align: middle; font-size: 10px; font-weight: 800; letter-spacing: .8px; line-height: 1;
+	padding: 4px 6px; border-radius: 5px; background: #000; color: #fff; border: 1px solid rgba(255,255,255,.35); }
+.cover .badge { position: absolute; right: 6px; bottom: 6px; pointer-events: none; }
+.caption .badge { margin-left: 6px; position: relative; top: -2px; }
+
+/* Album flip : the centre cover turns around and shows its tracks on the back */
+.flip-bg { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5000; display: none;
+	background: rgba(0,0,0,0); transition: background .5s; -webkit-perspective: 1600px; perspective: 1600px; }
+.flip-bg.open { display: block; }
+.flip-bg.show { background: rgba(0,0,0,.65); }
+.flipper { position: absolute; -webkit-transform-style: preserve-3d; transform-style: preserve-3d;
+	transition: -webkit-transform .65s cubic-bezier(.25,.8,.25,1); transition: transform .65s cubic-bezier(.25,.8,.25,1); }
+.flipper.still { transition: none; }
+.face { position: absolute; top: 0; right: 0; bottom: 0; left: 0; border-radius: 12px; overflow: hidden;
+	-webkit-backface-visibility: hidden; backface-visibility: hidden; }
+/* fill (not cover): the flipper starts scaled non-uniformly onto the square cover, which undoes the stretch */
+.face.front img { width: 100%; height: 100%; object-fit: fill; display: block; background: #22222a; }
+.face.back { -webkit-transform: rotateY(180deg); transform: rotateY(180deg); background: #1c1c22; border: 1px solid var(--line);
+	display: flex; flex-direction: column; box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+/* once the turn is finished the 3D context is flattened, so scrolling and taps work on old iOS Safari too */
+.flipper.settled { -webkit-transform: none !important; transform: none !important; transition: none; }
+.flipper.settled .front { display: none; }
+.flipper.settled .back { -webkit-transform: none; transform: none; }
+.bhead { display: grid; grid-template-columns: 92px minmax(0, 1fr) auto; gap: 14px; padding: 16px 14px 10px 16px; align-items: start; }
+.bhead img { width: 92px; height: 92px; object-fit: cover; border-radius: 8px; background: #22222a; }
+.bhead h2 { margin: 2px 0 4px; font-size: 20px; line-height: 1.2; }
+.bhead .sub { color: var(--muted); font-size: 14px; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 12px; }
+.pill { height: 38px; padding: 0 15px; border-radius: 19px; border: 1px solid var(--line); background-color: rgba(255,255,255,.07); font-weight: 600; }
+#shPlayer { margin-left: auto; max-width: 210px; padding: 0 12px; }
+.pill.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.tracks { list-style: none; margin: 0; padding: 0 10px 10px; border-top: 1px solid var(--line); flex: 1; min-height: 0;
+	overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.tracks li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 34px; align-items: center; gap: 8px; padding: 11px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 8px; }
+.tracks li span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rbtn { width: 32px; height: 32px; margin: -6px 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
+.rbtn:hover { background: rgba(255,255,255,.08); color: var(--accent); }
+.rbtn svg { width: 20px; height: 20px; fill: currentColor; }
+#bRadio.off { display: none; }
+#bFav.off { display: none; }
+.aib { display: inline-block; margin-left: 6px; padding: 0 4px; border-radius: 4px; background: rgba(255,255,255,.88); color: #15111f;
+	font-size: 10px; font-weight: 800; line-height: 15px; letter-spacing: .3px; vertical-align: 2px; font-style: normal; }
+#npAi.off { display: none; }
+#bFav.on { color: #ff4f8b; }
+#bFav.busy { opacity: .5; pointer-events: none; }
+.tracks li:hover { background: rgba(255,255,255,.05); }
+.tracks li.cur { background: rgba(79,195,247,.14); }
+.tracks li.cur span:nth-child(2) { color: var(--accent); font-weight: 600; }
+.tracks li.disc { display: block; cursor: default; color: var(--accent); font-weight: 600; font-size: 13px; padding: 14px 6px 6px; }
+.tracks li.disc:hover { background: none; }
+.tracks .n, .tracks .d { color: var(--muted); font-variant-numeric: tabular-nums; }
+.toast { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); background: var(--accent); color: var(--accent-ink);
+	padding: 10px 16px; border-radius: 20px; font-weight: 600; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 6000; }
+.toast.show { opacity: 1; }
+
+/* Older Safari (< 14.1) has no flexbox gap: fall back to margins */
+@supports not (inset: 0) {
+	.top > * { margin: 0 4px 4px 0; }
+	.np .btns > * { margin-left: 4px; }
+	.prog > * { margin-right: 10px; }
+	.actions > * { margin: 0 8px 8px 0; }
+	.bhead > * { margin-right: 14px; }
+	.letters button { margin-right: 2px; }
+}
+
+/* Glas: matches the Home Assistant "Glas" theme when shown in an HA iframe */
+html.glas {
+	--bg: transparent;
+	--panel: rgba(255, 255, 255, 0.075);
+	--line: rgba(255, 255, 255, 0.14);
+	--text: #f3effb;
+	--muted: rgba(236, 230, 248, 0.66);
+	--accent: #a78bfa;
+	--accent-ink: #ffffff;
+	--radius: 18px;
+}
+/* Opaque glass backdrop: desktop Chrome paints cross-origin iframes white when the colour schemes differ */
+html.glas { color-scheme: dark; background: radial-gradient(ellipse 70% 90% at 92% 0%, rgba(160, 72, 140, 0.42), transparent 70%),
+	linear-gradient(170deg, #4a3c78 0%, #3a3064 45%, #2b2449 100%); background-attachment: fixed; }
+html.glas body { background: transparent; }
+html.glas .brand { display: none; }
+html.glas #search { flex: 1 1 160px; width: auto; min-width: 120px; }
+html.glas .ctl { background-color: rgba(255, 255, 255, 0.075); border-radius: 12px; }
+html.glas select option { background: #2a2347; color: #f3effb; }
+html.glas .np { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16); }
+html.glas .cover img { background: #2a2347; }
+html.glas .cover .ph { background: linear-gradient(135deg, #3a2f5e, #211b3a); }
+html.glas .face.front img, html.glas .bhead img, html.glas .np img { background: #2a2347; }
+html.glas .face.back { background: #2a2347; }
+html.glas .flip-bg.show { background: rgba(18, 12, 36, 0.72); }
+html.glas .tracks li.cur { background: rgba(167, 139, 250, 0.16); }
+
+/* Glas (HA iframe): more room for the covers. The now-playing bar becomes a mini player at the
+   end of the top bar; tapping it opens a large player popup. The scroll slider is hidden
+   (swipe + letters). */
+html.glas .app { grid-template-rows: auto 1fr auto; }
+html.glas #scrub { display: none; }
+html.glas .nav { padding-top: 0; }
+html.glas .np:not(.open) { display: flex; align-items: center; gap: 8px; height: 38px; margin: 0; padding: 0 3px;
+	border-radius: 12px; cursor: pointer; max-width: 260px; min-width: 0; }
+html.glas .np:not(.open) img { width: 32px; height: 32px; border-radius: 8px; flex: none; }
+html.glas .np:not(.open) .info { min-width: 0; flex: 1; }
+html.glas .np:not(.open) .info .t { font-size: 13px; }
+html.glas .np:not(.open) .info .a, html.glas .np:not(.open) #bPrev, html.glas .np:not(.open) #bNext,
+html.glas .np:not(.open) #bRadio, html.glas .np:not(.open) #bFav, html.glas .np:not(.open) .volbox, html.glas .np:not(.open) .prog { display: none; }
+html.glas .np:not(.open) .ib { width: 32px; height: 32px; }
+html.glas .np:not(.open) .ib svg { width: 20px; height: 20px; }
+html.glas .np.open { position: fixed; left: 3%; right: 3%; top: 3%; bottom: 3%; z-index: 5500; width: auto; max-width: none; margin: 0;
+	padding: 26px 26px 18px; background: #241d3f; box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+	display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); grid-template-rows: minmax(0, 1fr) auto auto auto;
+	grid-template-areas: "img q" "info q" "btns q" "prog q"; column-gap: 30px; row-gap: 12px; justify-items: center; align-items: center; }
+html.glas .np.open img { grid-area: img; height: 100%; width: auto; max-width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 14px;
+	box-shadow: 0 18px 40px rgba(0, 0, 0, .5); cursor: pointer; }
+html.glas .np.open .info { grid-area: info; }
+html.glas .np.open .btns { grid-area: btns; }
+html.glas .np.open .prog { grid-area: prog; }
+#npQueue, #npClose, #npQHead { display: none; }
+html.glas .np.open #npQueue { display: block; grid-area: q; justify-self: stretch; align-self: stretch; min-height: 0; overflow-y: auto;
+	-webkit-overflow-scrolling: touch; border-top: 0; padding: 30px 0 0; margin: 0; }
+html.glas .np.open #npQHead { display: block; position: absolute; top: 22px; right: 70px; left: calc(45% + 30px); color: var(--muted);
+	font-size: 13px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; pointer-events: none; }
+html.glas .np.open #npClose { display: inline-flex; position: absolute; top: 12px; right: 12px; z-index: 2; }
+#npQueue li .q-a { color: var(--muted); }
+@media (max-aspect-ratio: 1/1) {
+	html.glas .np.open { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto minmax(0, 1fr);
+		grid-template-areas: "img" "info" "btns" "prog" "q"; }
+	html.glas .np.open img { height: 32vh; }
+	html.glas .np.open #npQHead { display: none; }
+	html.glas .np.open #npQueue { padding-top: 0; }
+}
+html.glas .np.open .info { text-align: center; max-width: 100%; }
+html.glas .np.open .info .t { font-size: 18px; }
+html.glas .np.open .btns { justify-content: center; flex-wrap: wrap; }
+html.glas .np.open .knob { width: 92px; height: 92px; }
+html.glas .np.open .knob .dial { top: 7px; right: 7px; bottom: 7px; left: 7px; }
+html.glas .np.open .knob .dial::after { top: 7px; height: 14px; width: 4px; margin-left: -2px; }
+html.glas .np.open .knob .kv { font-size: 20px; }
+html.glas .np.open .volbox { gap: 10px; margin-left: 10px; }
+html.glas .np.open .ib.sm { width: 42px; height: 42px; }
+html.glas .np.open .prog { width: 100%; margin-top: 0; }
+#npBg { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5400; background: rgba(18, 12, 36, 0.6); display: none; }
+#npBg.saver { background: rgba(12, 8, 26, 0.88); }
+#npBg.show { display: block; }
+
+/* own look for the dropdowns: iOS Safari otherwise draws them grey with its native style */
+select.ctl, select.pill { -webkit-appearance: none; -moz-appearance: none; appearance: none; color: var(--text); padding-right: 30px;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ece6f8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+	background-repeat: no-repeat; background-position: right 8px center; background-size: 18px 18px; }
+select.ctl::-ms-expand { display: none; }
+
+/* pseudo EQ (like macOS "now playing"): bouncing bars while playing, frozen when paused */
+.eq { display: inline-flex; align-items: flex-end; gap: 2px; width: 17px; height: 13px; margin-right: 7px; vertical-align: -1px; }
+.eq i { display: block; width: 3px; height: 30%; border-radius: 1px; background: var(--accent); -webkit-animation: eqb .9s ease-in-out infinite alternate; animation: eqb .9s ease-in-out infinite alternate; }
+.eq i:nth-child(2) { -webkit-animation-duration: .62s; animation-duration: .62s; -webkit-animation-delay: -.4s; animation-delay: -.4s; }
+.eq i:nth-child(3) { -webkit-animation-duration: .78s; animation-duration: .78s; -webkit-animation-delay: -.2s; animation-delay: -.2s; }
+.eq i:nth-child(4) { -webkit-animation-duration: .55s; animation-duration: .55s; -webkit-animation-delay: -.6s; animation-delay: -.6s; }
+.eq.paused i { -webkit-animation-play-state: paused; animation-play-state: paused; opacity: .6; }
+.eq.off { display: none; }
+@-webkit-keyframes eqb { 0% { height: 18%; } 45% { height: 100%; } 100% { height: 40%; } }
+@keyframes eqb { 0% { height: 18%; } 45% { height: 100%; } 100% { height: 40%; } }
+/* the same bars on the cover of the album that is playing right now */
+.cover .eq { position: absolute; left: 7px; bottom: 7px; margin: 0; padding: 5px 5px 4px; width: auto; height: 22px; border-radius: 6px;
+	background: rgba(10, 6, 24, .62); pointer-events: none; z-index: 2; }
+.cover .eq i { width: 4px; }
+/* Glas: a more obvious mini player */
+html.glas .np:not(.open) { border-color: rgba(167, 139, 250, .55); background: rgba(167, 139, 250, .14); padding-right: 4px;
+	box-shadow: 0 0 0 1px rgba(167, 139, 250, .18), 0 0 16px rgba(167, 139, 250, .22); }
+html.glas .np.playing:not(.open) { -webkit-animation: npglow 2.4s ease-in-out infinite; animation: npglow 2.4s ease-in-out infinite; }
+@-webkit-keyframes npglow { 50% { box-shadow: 0 0 0 1px rgba(167, 139, 250, .35), 0 0 24px rgba(167, 139, 250, .45); } }
+@keyframes npglow { 50% { box-shadow: 0 0 0 1px rgba(167, 139, 250, .35), 0 0 24px rgba(167, 139, 250, .45); } }
+html.glas .np:not(.open) img { width: 34px; height: 34px; }
+html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
+
+@media (max-width: 640px) {
+	#search { width: 100%; order: 10; }
+	.brand { width: 100%; }
+	#player { flex: 1; min-width: 0; max-width: none; }
+	.bhead { grid-template-columns: 72px minmax(0, 1fr) auto; }
+	.bhead img { width: 72px; height: 72px; }
+	.bhead h2 { font-size: 17px; }
+	.volbox { display: none; }
+	.np { grid-template-columns: 44px 1fr auto; }
+	.np img { width: 44px; height: 44px; }
+	.caption .t { font-size: 17px; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+	<header class="top">
+		<div class="brand">Album<span>Flow</span></div>
+		<input id="search" class="ctl" type="search" placeholder="Album oder Künstler suchen" autocomplete="off">
+		<select id="src" class="ctl" title="Quelle">
+			<option value="all">Alle</option>
+			<option value="local">Lokal</option>
+			<option value="tidal">TIDAL</option>
+		</select>
+		<select id="sort" class="ctl" title="Sammlung">
+			<option value="album">Alben</option>
+			<option value="artistalbum">Künstler</option>
+			<option value="new">Neueste</option>
+			<option value="songs">Titel</option>
+			<option value="playlists">Playlists</option>
+			<option value="mixes">Mixes</option>
+			<option value="home">Vorschläge</option>
+		</select>
+		<button id="dir" class="ctl" title="Reihenfolge umkehren"><svg viewBox="0 0 24 24"><path d="M11 4h2v12l5.5-5.5 1.42 1.42L12 19.84l-7.92-7.92L5.5 10.5 11 16z"/></svg></button>
+		<select id="player" class="ctl" title="Player"></select>
+		<button id="power" class="ctl" title="Player ein/aus"><svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17-1.42 1.42A6.92 6.92 0 0 1 19 12a7 7 0 1 1-11.42-5.42L6.17 5.17A8.93 8.93 0 0 0 3 12a9 9 0 0 0 18 0c0-2.74-1.23-5.18-3.17-6.83z"/></svg></button>
+	</header>
+
+	<main class="stage" id="stage" tabindex="0">
+		<div class="caption"><div class="t" id="capT"></div><div class="a" id="capA"></div></div>
+		<div class="empty" id="empty">Lade Alben …</div>
+	</main>
+
+	<div class="nav">
+		<input id="scrub" type="range" min="0" max="0" value="0" step="1" aria-label="Alben durchblättern">
+		<div class="letters" id="letters"></div>
+	</div>
+
+	<footer class="np">
+		<img id="npImg" alt="">
+		<div class="info" id="npInfo" title="Zum aktuellen Album springen">
+			<div class="t"><span class="eq off" id="npEq"><i></i><i></i><i></i><i></i></span><span id="npT">–</span><i class="aib off" id="npAi" title="Von TIDAL als KI-generiert markiert">AI</i></div>
+			<div class="a" id="npA"></div>
+		</div>
+		<div class="btns">
+			<button class="ib" id="bPrev" title="Zurück"><svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg></button>
+			<button class="ib big" id="bPlay" title="Play/Pause"><svg viewBox="0 0 24 24" id="playIcon"><path d="M8 5v14l11-7z"/></svg></button>
+			<button class="ib" id="bNext" title="Weiter"><svg viewBox="0 0 24 24"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg></button>
+			<button class="ib off" id="bFav" title="Zu TIDAL-Favoriten hinzufügen"><svg viewBox="0 0 24 24" id="favIcon"></svg></button>
+			<button class="ib off" id="bRadio" title="Titelradio"><svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-4.24-2.24 1.42 1.42A4 4 0 0 0 8 12c0 1.1.45 2.1 1.18 2.82l-1.42 1.42A6 6 0 0 1 6 12c0-1.66.67-3.16 1.76-4.24zm8.48 0A6 6 0 0 1 18 12a6 6 0 0 1-1.76 4.24l-1.42-1.42A4 4 0 0 0 16 12c0-1.1-.45-2.1-1.18-2.82l1.42-1.42zM4.93 4.93l1.41 1.41A8 8 0 0 0 4 12c0 2.21.9 4.21 2.34 5.66l-1.41 1.41A10 10 0 0 1 2 12c0-2.76 1.12-5.26 2.93-7.07zm14.14 0A10 10 0 0 1 22 12c0 2.76-1.12 5.26-2.93 7.07l-1.41-1.41A8 8 0 0 0 20 12c0-2.21-.9-4.21-2.34-5.66l1.41-1.41z"/></svg></button>
+			<div class="volbox" title="Lautstärke"><button class="ib sm" id="vDown" title="Leiser"><svg viewBox="0 0 24 24"><path d="M5 11h14v2H5z"/></svg></button><div class="knob" id="knob" role="slider" aria-label="Lautstärke" aria-valuemin="0" aria-valuemax="100"><div class="dial"></div><span class="kv" id="kv">–</span></div><button class="ib sm" id="vUp" title="Lauter"><svg viewBox="0 0 24 24"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6z"/></svg></button></div>
+		</div>
+		<button class="ib" id="npClose" title="Zurück zum Cover Flow"><svg viewBox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg></button>
+		<div id="npQHead">Wiedergabeliste</div>
+		<ul class="tracks" id="npQueue"></ul>
+		<div class="prog off" id="prog">
+			<span id="tCur">0:00</span>
+			<input id="seek" type="range" min="0" max="0" step="1" value="0" aria-label="Position im Titel">
+			<span id="tDur">0:00</span>
+		</div>
+	</footer>
+</div>
+
+<div class="flip-bg" id="sheetBg">
+	<div class="flipper" id="flipper" role="dialog" aria-modal="true">
+		<div class="face front"><img id="flFront" alt=""></div>
+		<div class="face back">
+			<div class="bhead">
+				<img id="shImg" alt="">
+				<div>
+					<h2 id="shT"></h2>
+					<div class="sub" id="shA"></div>
+				</div>
+				<button class="ib" id="shClose" title="Zurückdrehen"><svg viewBox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19 12 13.4 17.6 19 19 17.6 13.4 12z"/></svg></button>
+			</div>
+			<div class="actions">
+				<button class="pill primary" id="shPlay">▶ Abspielen</button>
+				<button class="pill" id="shNext">Als Nächstes</button>
+				<button class="pill" id="shAdd">Anhängen</button>
+				<select class="pill" id="shPlayer" title="Player"></select>
+			</div>
+			<ul class="tracks" id="shTracks"></ul>
+		</div>
+	</div>
+</div>
+<div id="npBg"></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+	'use strict';
+
+	// ---------- LMS JSON-RPC ----------
+	function rpc(player, cmd) {
+		return fetch('/jsonrpc.js', {
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
+			body: JSON.stringify({ id: 1, method: 'slim.request', params: [player || '', cmd] })
+		}).then(function (r) { return r.json(); }).then(function (j) { return j.result || {}; });
+	}
+
+	function store(key, val) {
+		try {
+			if (val === undefined) return localStorage.getItem('mflow.' + key);
+			localStorage.setItem('mflow.' + key, val);
+		} catch (e) { return null; }
+	}
+
+	function coverUrl(a, size) {
+		if (a.coverData) return a.coverData;
+		if (a.cover) return '/imageproxy/' + encodeURIComponent(a.cover) + '/image_' + size + 'x' + size + '_o';
+		return a.artwork_track_id ? '/music/' + encodeURIComponent(a.artwork_track_id) + '/cover_' + size + 'x' + size + '_o' : '';
+	}
+
+	var $ = function (id) { return document.getElementById(id); };
+	var stage = $('stage');
+
+	// ---------- State ----------
+	var all = [];          // every album from LMS
+	var list = [];         // albums after search filter
+	var pos = 0;           // current (fractional) flow position
+	var target = 0;        // position we animate towards
+	var nodes = {};        // index -> DOM node (virtualised)
+	var player = store('player') || '';
+	// ?player=<MAC or name>: start with this player on every page load (e.g. the wall tablet)
+	var wantPlayer = (location.search.match(/[?&]player=([^&]*)/) || [])[1];
+	wantPlayer = wantPlayer ? decodeURIComponent(wantPlayer.replace(/\+/g, ' ')).toLowerCase() : '';
+	var anim = null;
+	var size = 300, space = 80, gap = 140;
+	var VISIBLE = 11;
+
+	// ---------- Layout ----------
+	function measure() {
+		var w = stage.clientWidth, h = stage.clientHeight;
+		size = Math.max(120, Math.min(h * 0.58, w * 0.46, 520));
+		space = size * 0.24;
+		gap = size * 0.62;
+		Object.keys(nodes).forEach(function (k) { sizeNode(nodes[k]); });
+		render();
+	}
+	function sizeNode(n) {
+		n.style.width = size + 'px';
+		n.style.height = size + 'px';
+		n.style.marginLeft = (-size / 2) + 'px';
+		n.style.marginTop = (-size / 2) + 'px';
+	}
+
+	function makeNode(i) {
+		var a = list[i];
+		var n = document.createElement('div');
+		n.className = 'cover';
+		n.dataset.i = i;
+		var src = coverUrl(a, 500);
+		if (src) {
+			var img = new Image();
+			img.decoding = 'async';
+			img.alt = '';
+			img.src = src;
+			img.onerror = function () { img.remove(); addPlaceholder(n, a); };
+			n.appendChild(img);
+		} else {
+			addPlaceholder(n, a);
+			if (a.playlist || a.mix) buildMosaic(a);
+		}
+		if (isTidal(a)) n.appendChild(tidalBadge());
+		var eq = document.createElement('span');
+		eq.className = 'eq off';
+		eq.innerHTML = '<i></i><i></i><i></i><i></i>';
+		n.appendChild(eq);
+		n._eq = eq;
+		sizeNode(n);
+		stage.appendChild(n);
+		return n;
+	}
+	// Playlist without its own TIDAL image: like TIDAL, a 2x2 mosaic of the first four
+	// different album covers (drawn on a canvas; /imageproxy is same-origin, so no taint)
+	function buildMosaic(a) {
+		if (a.mosaicTried || !player) return;
+		a.mosaicTried = true;
+		rpc(player, remoteTracksCmd(a)).then(function (r) {
+			var t = r.tracks_loop || [], seen = {}, covers = [];
+			a.trackIds = t.map(function (tr) { return tr.id; });
+			t.forEach(function (tr) { if (tr.cover && !seen[tr.cover] && covers.length < 4) { seen[tr.cover] = 1; covers.push(tr.cover); } });
+			if (!covers.length) return;
+			if (covers.length < 4) covers = [covers[0]];
+			var S = 500, cv = document.createElement('canvas'), ctx = cv.getContext('2d'), left = covers.length;
+			cv.width = cv.height = S;
+			covers.forEach(function (c, k) {
+				var img = new Image();
+				img.onload = img.onerror = function () {
+					if (img.naturalWidth) {
+						if (covers.length === 1) ctx.drawImage(img, 0, 0, S, S);
+						else ctx.drawImage(img, (k % 2) * S / 2, Math.floor(k / 2) * S / 2, S / 2, S / 2);
+					}
+					if (--left) return;
+					try { a.coverData = cv.toDataURL('image/jpeg', 0.85); } catch (e) { return; }
+					var idx = list.indexOf(a);
+					if (idx >= 0 && nodes[idx]) { nodes[idx].remove(); delete nodes[idx]; render(); }
+				};
+				img.src = '/imageproxy/' + encodeURIComponent(c) + '/image_' + (covers.length === 1 ? S : S / 2) + 'x' + (covers.length === 1 ? S : S / 2) + '_o';
+			});
+		}).catch(function () {});
+	}
+	function addPlaceholder(n, a) {
+		var p = document.createElement('div');
+		p.className = 'ph';
+		p.textContent = a.album;
+		n.appendChild(p);
+	}
+	// TIDAL albums imported via the online library carry an extid like "tidal:album:123"
+	function isTidal(a) { return /^tidal:/.test(a.extid || ''); }
+	function tidalBadge() {
+		var b = document.createElement('span');
+		b.className = 'badge';
+		b.textContent = 'TIDAL';
+		return b;
+	}
+
+	// ---------- Render ----------
+	function render() {
+		var n = list.length;
+		$('empty').style.display = n ? 'none' : 'flex';
+		if (!n) { $('capT').textContent = ''; $('capA').textContent = ''; }
+		var c = Math.round(pos);
+		var lo = Math.max(0, c - VISIBLE), hi = Math.min(n - 1, c + VISIBLE);
+
+		Object.keys(nodes).forEach(function (k) {
+			var i = +k;
+			if (i < lo || i > hi) { nodes[k].remove(); delete nodes[k]; }
+		});
+		for (var i = lo; i <= hi; i++) {
+			var el = nodes[i] || (nodes[i] = makeNode(i));
+			var d = i - pos;
+			var s = Math.max(-1, Math.min(1, d));
+			var x = d * space + s * gap;
+			var rot = -s * 62;
+			var z = -Math.abs(s) * size * 0.55;
+			el.style.transform = 'translateX(' + x.toFixed(1) + 'px) translateZ(' + z.toFixed(1) + 'px) rotateY(' + rot.toFixed(1) + 'deg)';
+			el.style.zIndex = String(1000 - Math.round(Math.abs(d) * 10));
+			el.style.opacity = Math.abs(d) > VISIBLE - 1 ? '0' : '1';
+			if (el._eq) el._eq.className = 'eq ' + (npAlbumId != null && npMode !== 'stop' && String(list[i].id) === String(npAlbumId) ? (npMode === 'play' ? 'on' : 'paused') : 'off');
+		}
+		if (n) {
+			var a = list[Math.max(0, Math.min(n - 1, c))];
+			$('capT').textContent = a.album;
+			if (isTidal(a)) $('capT').appendChild(tidalBadge());
+			$('capA').textContent = subLine(a);
+			$('scrub').value = String(c);
+			markLetter(a);
+		}
+	}
+
+	// ---------- Animation ----------
+	function clampIdx(v) { return Math.max(0, Math.min(list.length - 1, v)); }
+	function goTo(i, instant) {
+		target = clampIdx(i);
+		if (instant) { pos = target; render(); return; }
+		// far jumps: start close to the target so we don't fly past hundreds of covers
+		if (Math.abs(target - pos) > 12) pos = target - Math.sign(target - pos) * 12;
+		if (!anim) anim = requestAnimationFrame(step);
+	}
+	function step() {
+		var diff = target - pos;
+		if (Math.abs(diff) < 0.002) { pos = target; anim = null; render(); return; }
+		pos += diff * 0.16;
+		render();
+		anim = requestAnimationFrame(step);
+	}
+
+	// ---------- Touch / mouse ----------
+	// Pointer Events where available; plain touch + mouse events for older
+	// Safari (iOS 12 and earlier have no Pointer Events at all).
+	var drag = null;
+	function startDrag(x, targetEl) {
+		if (!list.length) return;
+		if (anim) { cancelAnimationFrame(anim); anim = null; }
+		var now = Date.now();
+		drag = { x: x, p: pos, lastX: x, lastT: now, v: 0, moved: false,
+			hit: targetEl && targetEl.closest ? targetEl.closest('.cover') : null };
+	}
+	function moveDrag(x) {
+		if (!drag) return;
+		var dx = x - drag.x;
+		if (Math.abs(dx) > 6) drag.moved = true;
+		var now = Date.now(), dt = now - drag.lastT;
+		if (dt > 0) drag.v = 0.8 * ((x - drag.lastX) / dt) + 0.2 * drag.v;
+		drag.lastX = x; drag.lastT = now;
+		pos = Math.max(-0.4, Math.min(list.length - 0.6, drag.p - dx / space));
+		render();
+	}
+	if (window.PointerEvent) {
+		stage.addEventListener('pointerdown', function (e) {
+			if (e.pointerType === 'mouse' && e.button !== 0) return;
+			try { stage.setPointerCapture(e.pointerId); } catch (err) {}
+			startDrag(e.clientX, e.target);
+		});
+		stage.addEventListener('pointermove', function (e) { moveDrag(e.clientX); });
+		stage.addEventListener('pointerup', endDrag);
+		stage.addEventListener('pointercancel', endDrag);
+	} else {
+		stage.addEventListener('touchstart', function (e) {
+			if (e.touches.length !== 1) return;
+			startDrag(e.touches[0].clientX, e.target);
+		}, { passive: true });
+		stage.addEventListener('touchmove', function (e) {
+			if (!drag) return;
+			e.preventDefault();
+			moveDrag(e.touches[0].clientX);
+		}, { passive: false });
+		stage.addEventListener('touchend', function (e) {
+			if (drag && drag.moved) e.preventDefault(); // no synthetic click after a swipe
+			endDrag();
+		}, { passive: false });
+		stage.addEventListener('touchcancel', endDrag);
+		stage.addEventListener('mousedown', function (e) {
+			if (e.button !== 0) return;
+			startDrag(e.clientX, e.target);
+			function mm(ev) { moveDrag(ev.clientX); }
+			function mu() { document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); endDrag(); }
+			document.addEventListener('mousemove', mm);
+			document.addEventListener('mouseup', mu);
+		});
+	}
+	function endDrag(e) {
+		if (!drag) return;
+		var d = drag; drag = null;
+		if (!d.moved) {
+			if (d.hit) {
+				var i = +d.hit.dataset.i;
+				if (i === Math.round(pos)) openAlbum(list[i]); else goTo(i);
+			} else {
+				goTo(Math.round(pos));
+			}
+			return;
+		}
+		// fling: velocity in px/ms -> covers
+		goTo(Math.round(pos - (d.v * 260) / space));
+	}
+
+	var wheelTimer = null;
+	stage.addEventListener('wheel', function (e) {
+		if (!list.length) return;
+		e.preventDefault();
+		var delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+		if (anim) { cancelAnimationFrame(anim); anim = null; }
+		pos = Math.max(0, Math.min(list.length - 1, pos + delta / 90));
+		render();
+		clearTimeout(wheelTimer);
+		wheelTimer = setTimeout(function () { goTo(Math.round(pos)); }, 140);
+	}, { passive: false });
+
+	document.addEventListener('keydown', function (e) {
+		if ($('sheetBg').classList.contains('open')) { if (e.key === 'Escape') closeAlbum(); return; }
+		if (document.activeElement && /INPUT|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
+		if (e.key === 'ArrowRight') { goTo(Math.round(target) + 1); e.preventDefault(); }
+		else if (e.key === 'ArrowLeft') { goTo(Math.round(target) - 1); e.preventDefault(); }
+		else if (e.key === 'PageDown') goTo(Math.round(target) + 10);
+		else if (e.key === 'PageUp') goTo(Math.round(target) - 10);
+		else if (e.key === 'Home') goTo(0);
+		else if (e.key === 'End') goTo(list.length - 1);
+		else if (e.key === 'Enter' && list.length) openAlbum(list[Math.round(pos)]);
+	});
+
+	$('scrub').addEventListener('input', function () { goTo(+this.value, true); });
+
+	// ---------- Letters ----------
+	function sortKey(a) {
+		var s = $('sort').value;
+		var k = s === 'artistalbum' ? (a.artist || '') : (s === 'album' || s === 'playlists') ? (a.album || '') : '';
+		var ch = k.replace(/^(the|die|der|das|le|la|les)\s+/i, '').trim().charAt(0).toUpperCase();
+		ch = ch.normalize ? ch.normalize('NFD').charAt(0) : ch;
+		return /[A-Z]/.test(ch) ? ch : '#';
+	}
+	var letterIdx = {};
+	function buildLetters() {
+		var box = $('letters');
+		box.innerHTML = '';
+		letterIdx = {};
+		var s = $('sort').value;
+		box.style.display = (s === 'album' || s === 'artistalbum' || s === 'playlists') ? 'flex' : 'none';
+		list.forEach(function (a, i) { var k = sortKey(a); if (!(k in letterIdx)) letterIdx[k] = i; });
+		'#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(function (L) {
+			var b = document.createElement('button');
+			b.textContent = L;
+			b.dataset.l = L;
+			if (!(L in letterIdx)) b.disabled = true;
+			b.addEventListener('click', function () { goTo(letterIdx[L]); });
+			box.appendChild(b);
+		});
+	}
+	var lastLetter = null;
+	function markLetter(a) {
+		var L = sortKey(a);
+		if (L === lastLetter) return;
+		lastLetter = L;
+		[].forEach.call($('letters').children, function (b) { b.classList.toggle('on', b.dataset.l === L); });
+	}
+
+	// ---------- Data ----------
+	function clearNodes() {
+		Object.keys(nodes).forEach(function (k) { nodes[k].remove(); });
+		nodes = {};
+	}
+	function subLine(a, long) {
+		if (a.song) return [a.artist, a.albumName, long && a.added ? 'hinzugefügt ' + fmtDate(a.added) : ''].filter(Boolean).join(' · ');
+		if (a.radio) return a.sub;
+		if (a.module) return [a.tidalAlbum ? a.artist : a.sub, a.module].filter(Boolean).join(' · ');
+		if (a.mix) return [a.sub, 'Mix'].filter(Boolean).join(' · ');
+		if (a.playlist) return [a.mine ? 'Eigene Playlist' : 'Favorit', a.tracks ? a.tracks + ' Titel' : '', long && a.updated ? 'geändert ' + fmtDate(a.updated) : ''].filter(Boolean).join(' · ');
+		return [a.artist, a.year && a.year !== '0' && a.year !== 0 ? a.year : '', a.fromSearch ? 'aus der TIDAL-Suche' : ''].filter(Boolean).join(' · ');
+	}
+	function fmtDate(iso) {
+		var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+		return m ? +m[3] + '.' + +m[2] + '.' + m[1] : '';
+	}
+	// the "Sammlung" menu (#sort): album sorts for LMS albums, or the TIDAL views songs / playlists
+	// up/down: reverses the current order of whatever the "Sammlung" shows
+	var sortDesc = store('desc') === '1';
+	$('dir').classList.toggle('on', sortDesc);
+	$('dir').addEventListener('click', function () {
+		sortDesc = !sortDesc;
+		store('desc', sortDesc ? '1' : '0');
+		this.classList.toggle('on', sortDesc);
+		applyFilter(list.length ? list[Math.round(pos)].id : null);
+	});
+	function songsMode() { return $('sort').value === 'songs'; }
+	function plMode() { return $('sort').value === 'playlists'; }
+	function remoteMode() { return /^(playlists|mixes|home)$/.test($('sort').value); }
+	function specialMode() { return songsMode() || remoteMode(); }
+	var VIEW_NAMES = { songs: 'Titel', playlists: 'Playlists', mixes: 'Mixes', home: 'Vorschläge' };
+	function applyFilter(keepAlbumId) {
+		var q = $('search').value.trim().toLowerCase();
+		var src = $('src').value;
+		list = all.filter(function (a) {
+			if (src === 'tidal' && !isTidal(a)) return false; // (playlists/songs: src is neither)
+			if (src === 'local' && isTidal(a)) return false;
+			return !q || (a.album || '').toLowerCase().indexOf(q) >= 0 || (a.artist || '').toLowerCase().indexOf(q) >= 0 ||
+				(a.albumName || '').toLowerCase().indexOf(q) >= 0;
+		});
+		if (sortDesc) list.reverse();
+		clearNodes();
+		$('scrub').max = String(Math.max(0, list.length - 1));
+		buildLetters();
+		lastLetter = null;
+		var idx = 0;
+		if (keepAlbumId != null) {
+			for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(keepAlbumId)) { idx = i; break; }
+		}
+		goTo(idx, true);
+		if (!list.length) $('empty').textContent = specialMode() && src === 'local' ? VIEW_NAMES[$('sort').value] + ' gibt es nur aus TIDAL' : q ? 'Keine Treffer' : songsMode() ? 'Keine Lieblingssongs' : remoteMode() ? 'Keine ' + VIEW_NAMES[$('sort').value] : 'Keine Alben gefunden';
+		tidalSearch(q);
+	}
+
+	// Full TIDAL search: after the library hits, albums from the whole TIDAL catalogue
+	// (via the plugin's "albumflow tidalsearch", with the selected player's account).
+	// Albums already in the library are left out; the rest carry the TIDAL badge.
+	var tsSeq = 0, tsTimer = null;
+	function tidalSearch(q) {
+		clearTimeout(tsTimer);
+		var seq = ++tsSeq;
+		if (!q || q.length < 3 || specialMode() || $('src').value === 'local' || !player) return;
+		if (!list.length) $('empty').textContent = 'Suche in TIDAL …';
+		tsTimer = setTimeout(function () {
+			rpc(player, ['albumflow', 'tidalsearch', 'term:' + q, 'limit:40']).then(function (r) {
+				if (seq !== tsSeq) return;
+				var have = {};
+				all.forEach(function (a) { var m = /tidal:album:(\d+)/.exec(a.extid || ''); if (m) have[m[1]] = 1; });
+				var extra = (r.albums_loop || []).filter(function (x) { return !have[x.id]; }).map(function (x) {
+					return { id: 'tidal-' + x.id, tidalAlbum: x.id, album: x.title, artist: x.artist, year: x.year,
+						cover: x.cover, extid: 'tidal:album:' + x.id, fromSearch: true };
+				});
+				if (!extra.length) { if (!list.length) $('empty').textContent = 'Keine Treffer'; return; }
+				list = list.concat(extra);
+				$('scrub').max = String(Math.max(0, list.length - 1));
+				buildLetters();
+				render();
+			}).catch(function () { if (seq === tsSeq && !list.length) $('empty').textContent = 'Keine Treffer'; });
+		}, 500);
+	}
+	function loadAlbums() {
+		var current = list.length && !list[0].song && !list[0].playlist ? list[Math.round(pos)].id : store('album');
+		$('empty').textContent = 'Lade Alben …';
+		all = []; applyFilter();
+		$('empty').textContent = 'Lade Alben …';
+		return rpc('', ['albums', 0, 99999, 'tags:jlayE', 'sort:' + $('sort').value]).then(function (r) {
+			if (specialMode()) return;
+			all = r.albums_loop || [];
+			applyFilter(current);
+		}).catch(function () { $('empty').textContent = 'Lyrion nicht erreichbar'; });
+	}
+
+	// "Meine Lieder": the TIDAL favourite tracks of the selected player's account,
+	// newest first (via the plugin's own "albumflow tidalfavs" command)
+	var songs = [], songsFor = null;
+
+	function sortSongs() {
+		var s = $('sort').value, by = function (k) { return function (x, y) { return (x[k] || '').localeCompare(y[k] || ''); }; };
+		all = songs.slice();
+		if (s === 'album') all.sort(by('album'));
+		else if (s === 'artistalbum') all.sort(function (x, y) { return by('artist')(x, y) || by('album')(x, y); });
+		else if (s === 'yearalbum') all.reverse();
+	}
+	function loadSongs(force) {
+		if (!player) { all = []; applyFilter(); $('empty').textContent = 'Bitte zuerst einen Player wählen'; return; }
+		if (!force && songsFor === player) { sortSongs(); applyFilter(store('song')); return; }
+		all = []; applyFilter();
+		$('empty').textContent = 'Lade Meine Lieder …';
+		var forPlayer = player;
+		return rpc(player, ['albumflow', 'tidalfavs']).then(function (r) {
+			if (!songsMode() || player !== forPlayer) return;
+			if (r.error || !r.tracks_loop) { $('empty').textContent = r.error ? 'TIDAL: ' + r.error : 'Keine Lieblingssongs'; return; }
+			songs = r.tracks_loop.map(function (t) {
+				return { id: 't' + t.id, tidalId: t.id, song: true, album: t.title, artist: t.artist, albumName: t.album,
+					duration: t.duration, cover: t.cover, added: t.added, ai: +t.ai === 1, extid: 'tidal:track:' + t.id };
+			});
+			songsFor = forPlayer;
+			sortSongs();
+			applyFilter(store('song'));
+		}).catch(function () { $('empty').textContent = 'Lyrion nicht erreichbar'; });
+	}
+	// "Playlists": the TIDAL "My playlists" of the selected player's account (own + favourited),
+	// via the plugin's "albumflow tidalplaylists"; shown as covers like albums
+	var pls = [], plsFor = null;
+	function sortPls() {
+		var s = $('sort').value, byName = function (x, y) { return x.album.localeCompare(y.album, 'de', { sensitivity: 'base' }); };
+		all = pls.slice();
+		if (s === 'album') all.sort(byName);
+		else if (s === 'artistalbum') all.sort(function (x, y) { return (y.mine - x.mine) || byName(x, y); });
+		else if (s === 'new') all.sort(function (x, y) { return (y.updated || '').localeCompare(x.updated || ''); });
+		else all.sort(byName);
+	}
+	// Playlists / Mixes / Vorschläge: lists from the selected player's TIDAL account via the plugin
+	// (tidalplaylists, tidalmixes, tidalhome); every entry shows up in the flow like an album
+	var REMOTE_CMD = { playlists: 'tidalplaylists', mixes: 'tidalmixes', home: 'tidalhome' };
+	var remoteFor = null;
+	function remoteItem(x) {
+		var o = { album: String(x.title || '').trim() || 'Ohne Namen', cover: x.cover, sub: x.sub || '', module: x.module || '' };
+		if (x.kind === 'mix') { o.id = 'mx-' + x.id; o.mix = true; o.mixId = x.id; o.extid = 'tidal:mix:' + x.id; }
+		else if (x.kind === 'album') { o.id = 'al-' + x.id; o.tidalAlbum = x.id; o.artist = x.sub || ''; o.extid = 'tidal:album:' + x.id; }
+		else { o.id = 'pl-' + x.id; o.playlist = true; o.uuid = x.id; o.extid = 'tidal:playlist:' + x.id; }
+		return o;
+	}
+	function loadRemote(force) {
+		var kind = $('sort').value;
+		if (!player) { all = []; applyFilter(); $('empty').textContent = 'Bitte zuerst einen Player wählen'; return; }
+		if (!force && remoteFor === player + ':' + kind) { if (kind === 'playlists') sortPls(); else all = pls.slice(); applyFilter(store('playlist')); return; }
+		all = []; applyFilter();
+		$('empty').textContent = 'Lade ' + VIEW_NAMES[kind] + ' …';
+		var forPlayer = player;
+		return rpc(player, ['albumflow', REMOTE_CMD[kind]]).then(function (r) {
+			if ($('sort').value !== kind || player !== forPlayer) return;
+			if (r.error) { $('empty').textContent = 'TIDAL: ' + r.error; return; }
+			if (kind === 'playlists') {
+				pls = (r.playlists_loop || []).map(function (p) {
+					return { id: 'pl-' + p.uuid, playlist: true, uuid: p.uuid, album: String(p.title || '').trim() || 'Ohne Namen',
+						mine: +p.mine || 0, tracks: +p.tracks || 0, cover: p.cover, updated: p.updated, extid: 'tidal:playlist:' + p.uuid };
+				});
+				sortPls();
+			} else {
+				pls = (r.items_loop || []).map(remoteItem);
+				all = pls.slice();
+			}
+			remoteFor = forPlayer + ':' + kind;
+			applyFilter(store('playlist'));
+		}).catch(function () { $('empty').textContent = 'Lyrion nicht erreichbar'; });
+	}
+	function loadView() {
+		return songsMode() ? loadSongs() : remoteMode() ? loadRemote() : loadAlbums();
+	}
+
+	// remembered menus; older versions stored songs/playlists as a source
+	(function () {
+		var src = store('src') || 'all', view = store('view') || 'album';
+		if (src === 'songs' || src === 'playlists') { view = src; src = 'all'; }
+		if (!/^(all|local|tidal)$/.test(src)) src = 'all';
+		if (!/^(album|artistalbum|new|songs|playlists|mixes|home)$/.test(view)) view = 'album';
+		$('src').value = src; $('sort').value = view;
+	})();
+	var lastView = $('sort').value;
+	$('sort').addEventListener('change', function () {
+		store('view', this.value);
+		var wasAlbums = !/^(songs|playlists|mixes|home)$/.test(lastView);
+		lastView = this.value;
+		if (!specialMode() && wasAlbums) loadAlbums(); else loadView();
+	});
+	$('src').addEventListener('change', function () {
+		store('src', this.value);
+		applyFilter(list.length && !specialMode() ? list[Math.round(pos)].id : null);
+	});
+	var searchTimer = null;
+	$('search').addEventListener('input', function () { clearTimeout(searchTimer); searchTimer = setTimeout(function () { applyFilter(); }, 180); });
+
+	// ---------- Album flip ----------
+	// The centre cover is replaced by a "flipper" that grows to the middle of the
+	// screen while turning 180 degrees; its back face holds the track list.
+	var openA = null, flipNode = null, flipFrom = '', flipBusy = false;
+	var flipper = $('flipper'), flipBg = $('sheetBg');
+	function fmt(sec) { sec = Math.round(+sec || 0); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); }
+	function setTf(el, v) { el.style.webkitTransform = v; el.style.transform = v; }
+	function afterTransition(el, ms, fn) {
+		var done = false;
+		function end(e) { if (e && e.target !== el) return; if (done) return; done = true;
+			el.removeEventListener('transitionend', end); el.removeEventListener('webkitTransitionEnd', end); fn(); }
+		el.addEventListener('transitionend', end);
+		el.addEventListener('webkitTransitionEnd', end);
+		setTimeout(end, ms + 120); // safety net if transitionend never fires
+	}
+	function fillBack(a) {
+		$('shImg').src = coverUrl(a, 500) || '/html/images/cover.png';
+		$('shT').textContent = a.album;
+		if (isTidal(a)) $('shT').appendChild(tidalBadge());
+		$('shA').textContent = subLine(a, true);
+		loadTracks(a);
+	}
+	function openAlbum(a) {
+		if (!a || flipBusy || openA) return;
+		openA = a;
+		$('shPlayer').value = player;
+		if (!a.radio) store(a.song ? 'song' : remoteMode() ? 'playlist' : 'album', a.id);
+		$('flFront').src = coverUrl(a, 500) || '/html/images/cover.png';
+		fillBack(a);
+
+		// target box: centred, roughly square on large screens, tall on phones
+		var vw = window.innerWidth, vh = window.innerHeight;
+		var W = Math.min(680, vw - 24), H = Math.min(vh - 32, Math.max(W, vh * 0.75));
+		var L = (vw - W) / 2, T = (vh - H) / 2;
+		flipper.style.left = L + 'px'; flipper.style.top = T + 'px';
+		flipper.style.width = W + 'px'; flipper.style.height = H + 'px';
+
+		// start box: the centre cover as it sits in the flow right now
+		flipNode = nodes[Math.round(pos)] || null;
+		var r = flipNode ? flipNode.getBoundingClientRect() : { left: vw / 2 - size / 2, top: vh / 2 - size / 2, width: size, height: size };
+		flipFrom = 'translate(' + (r.left + r.width / 2 - (L + W / 2)).toFixed(1) + 'px,' + (r.top + r.height / 2 - (T + H / 2)).toFixed(1) + 'px) ' +
+			'scale(' + (r.width / W).toFixed(4) + ',' + (r.height / H).toFixed(4) + ') rotateY(0deg)';
+
+		flipBusy = true;
+		flipper.className = 'flipper still';
+		setTf(flipper, flipFrom);
+		flipBg.classList.add('open');
+		if (flipNode) flipNode.style.visibility = 'hidden';
+		void flipper.offsetWidth; // commit the start state before animating
+		flipper.className = 'flipper';
+		flipBg.classList.add('show');
+		setTf(flipper, 'translate(0px,0px) scale(1,1) rotateY(180deg)');
+		afterTransition(flipper, 650, function () { flipper.className = 'flipper still settled'; flipBusy = false; });
+	}
+	function closeAlbum() {
+		if (!openA || flipBusy) return;
+		flipBusy = true;
+		// un-flatten (visually identical), then turn back into the flow
+		flipper.className = 'flipper still';
+		setTf(flipper, 'translate(0px,0px) scale(1,1) rotateY(180deg)');
+		void flipper.offsetWidth;
+		flipper.className = 'flipper';
+		flipBg.classList.remove('show');
+		setTf(flipper, flipFrom);
+		afterTransition(flipper, 650, function () {
+			flipBg.classList.remove('open');
+			if (flipNode) flipNode.style.visibility = '';
+			flipNode = null; openA = null; flipBusy = false;
+			stage.focus();
+		});
+	}
+	// "Titelradio": TIDAL's track radio for one track (plugin: albumflow tidalradio)
+	var RADIO_SVG = '<svg viewBox="0 0 24 24"><path d="M12 10a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-4.24-2.24 1.42 1.42A4 4 0 0 0 8 12c0 1.1.45 2.1 1.18 2.82l-1.42 1.42A6 6 0 0 1 6 12c0-1.66.67-3.16 1.76-4.24zm8.48 0A6 6 0 0 1 18 12a6 6 0 0 1-1.76 4.24l-1.42-1.42A4 4 0 0 0 16 12c0-1.1-.45-2.1-1.18-2.82l1.42-1.42zM4.93 4.93l1.41 1.41A8 8 0 0 0 4 12c0 2.21.9 4.21 2.34 5.66l-1.41 1.41A10 10 0 0 1 2 12c0-2.76 1.12-5.26 2.93-7.07zm14.14 0A10 10 0 0 1 22 12c0 2.76-1.12 5.26-2.93 7.07l-1.41-1.41A8 8 0 0 0 20 12c0-2.21-.9-4.21-2.34-5.66l1.41-1.41z"/></svg>';
+	// opens the radio as a track list on the back side (like an album); ▶ Abspielen plays it
+	function startRadio(id, title, cover) {
+		if (!player) { toast('Bitte zuerst einen Player wählen'); return; }
+		var r = { id: 'radio-' + id, radio: true, radioId: id, album: 'Titelradio' + (title ? ': ' + title : ''),
+			sub: 'TIDAL Titelradio', coverData: cover || '', extid: 'tidal:radio:' + id };
+		npPopup(false);
+		if (openA) {
+			if (flipBusy) return;
+			openA = r;
+			fillBack(r); // already turned around: just swap the content
+		} else {
+			openAlbum(r);
+		}
+	}
+	function radioCell(id, title, cover) {
+		if (!id) return document.createElement('span');
+		var b = document.createElement('button');
+		b.className = 'rbtn';
+		b.title = 'Titelradio';
+		b.innerHTML = RADIO_SVG;
+		b.addEventListener('click', function (e) { e.stopPropagation(); startRadio(id, title, cover); });
+		return b;
+	}
+	function aiBadge() {
+		var b = document.createElement('i');
+		b.className = 'aib';
+		b.textContent = 'AI';
+		b.title = 'Von TIDAL als KI-generiert markiert';
+		return b;
+	}
+	// rows: [[tidalId, element]] - asks the plugin which tracks are AI generated and badges them
+	function markAi(rows, stillValid) {
+		var ids = rows.map(function (r) { return r[0]; }).filter(Boolean);
+		if (!ids.length || !player) return;
+		rpc(player, ['albumflow', 'tidalai', 'ids:' + ids.slice(0, 300).join(',')]).then(function (r) {
+			if (stillValid && !stillValid()) return;
+			var ai = {};
+			String(r.ai || '').split(',').forEach(function (id) { if (id) ai[id] = 1; });
+			rows.forEach(function (row) { if (ai[row[0]] && !row[1].querySelector('.aib')) row[1].appendChild(aiBadge()); });
+		});
+	}
+	function tidalIdOf(tr, a) {
+		if (a && (a.tidalAlbum || a.playlist || a.mix || a.radio)) return tr.id;
+		var m = /^tidal:\/\/(\d+)/.exec(tr.url || '');
+		return m ? m[1] : null;
+	}
+	function songRow(s, i, current) {
+		var li = document.createElement('li');
+		if (current) li.className = 'cur';
+		var nEl = document.createElement('span'); nEl.className = 'n'; nEl.textContent = i + 1;
+		var tEl = document.createElement('span'); tEl.textContent = s.album + (s.artist ? ' – ' + s.artist : '');
+		if (s.ai) tEl.appendChild(aiBadge());
+		var dEl = document.createElement('span'); dEl.className = 'd'; dEl.textContent = s.duration ? fmt(s.duration) : '';
+		li.appendChild(nEl); li.appendChild(tEl); li.appendChild(dEl); li.appendChild(radioCell(s.tidalId, s.album, s.cover));
+		li.addEventListener('click', function () { playAlbum(s, 'load', i); });
+		return li;
+	}
+	function remoteTracksCmd(a) {
+		if (a.radio) return ['albumflow', 'tidalradio', 'id:' + a.radioId, 'list:1'];
+		return a.playlist ? ['albumflow', 'tidalplaylist', 'uuid:' + a.uuid] : a.mix ? ['albumflow', 'tidalmix', 'id:' + a.mixId] : ['albumflow', 'tidalalbum', 'id:' + a.tidalAlbum];
+	}
+	function loadTracks(a) {
+		var ul = $('shTracks');
+		if (a.song) {
+			// back of a song: the whole "Meine Lieder" list in the current order, this song marked
+			ul.innerHTML = '';
+			var h = document.createElement('li');
+			h.className = 'disc';
+			h.textContent = 'Meine Lieder · ' + list.length + ' Titel';
+			ul.appendChild(h);
+			var at = list.indexOf(a), curLi = null;
+			list.forEach(function (s, i) {
+				var li = songRow(s, i, i === at);
+				if (i === at) curLi = li;
+				ul.appendChild(li);
+			});
+			ul.scrollTop = curLi ? Math.max(0, curLi.offsetTop - ul.offsetTop - 60) : 0;
+			return;
+		}
+		ul.innerHTML = '<li><span></span><span style="color:var(--muted)">Lade Titel …</span><span></span></li>';
+		ul.scrollTop = 0;
+		var req = (a.tidalAlbum || a.playlist || a.mix || a.radio)
+			? rpc(player, remoteTracksCmd(a))
+			: rpc('', ['titles', 0, 500, 'album_id:' + a.id, 'tags:tdiu', 'sort:tracknum']);
+		req.then(function (r) {
+			if (openA !== a) return;
+			var t = r.titles_loop || r.tracks_loop || [];
+			if (a.tidalAlbum || a.playlist || a.mix || a.radio) a.trackIds = t.map(function (tr) { return tr.id; });
+			var discs = {};
+			t.forEach(function (tr) { discs[tr.disc || 1] = 1; });
+			var multiDisc = Object.keys(discs).length > 1, lastDisc = null, aiRows = [];
+			ul.innerHTML = '';
+			t.forEach(function (tr, i) {
+				if (multiDisc && tr.disc !== lastDisc) {
+					lastDisc = tr.disc;
+					var h = document.createElement('li');
+					h.className = 'disc';
+					h.textContent = 'CD ' + (tr.disc || 1);
+					ul.appendChild(h);
+				}
+				var li = document.createElement('li');
+				var nEl = document.createElement('span'); nEl.className = 'n'; nEl.textContent = tr.tracknum || (i + 1);
+				var tEl = document.createElement('span'); tEl.textContent = (a.playlist || a.mix || a.radio) && tr.artist ? tr.title + ' – ' + tr.artist : tr.title;
+				if (+tr.ai === 1) tEl.appendChild(aiBadge());
+				else if (!(a.tidalAlbum || a.playlist || a.mix || a.radio) && tidalIdOf(tr, a)) aiRows.push([tidalIdOf(tr, a), tEl]);
+				var dEl = document.createElement('span'); dEl.className = 'd'; dEl.textContent = tr.duration ? fmt(tr.duration) : '';
+				li.appendChild(nEl); li.appendChild(tEl); li.appendChild(dEl); li.appendChild(radioCell(tidalIdOf(tr, a), tr.title, tr.cover || coverUrl(a, 500)));
+				li.addEventListener('click', function () { playAlbum(a, 'load', i); });
+				ul.appendChild(li);
+			});
+			if (!t.length) ul.innerHTML = '<li><span></span><span style="color:var(--muted)">Keine Titel</span><span></span></li>';
+			markAi(aiRows, function () { return openA === a; }); // TIDAL albums from the library
+		});
+	}
+	$('shClose').addEventListener('click', closeAlbum);
+	flipBg.addEventListener('click', function (e) { if (e.target === this) closeAlbum(); });
+	$('shPlay').addEventListener('click', function () { playAlbum(openA, 'load'); });
+	$('shNext').addEventListener('click', function () { playAlbum(openA, 'insert'); });
+	$('shAdd').addEventListener('click', function () { playAlbum(openA, 'add'); });
+
+	function toast(msg) {
+		var t = $('toast');
+		t.textContent = msg;
+		t.classList.add('show');
+		clearTimeout(toast.h);
+		toast.h = setTimeout(function () { t.classList.remove('show'); }, 1800);
+	}
+	function playAlbum(a, how, startIndex) {
+		if (!a) return;
+		if (!player) { toast('Bitte zuerst einen Player wählen'); return; }
+		var cmd;
+		if (a.song) {
+			// play: the whole (filtered, sorted) list starting at this song; next/add: just this song
+			var ids = how === 'load' ? list.map(function (s) { return s.tidalId; }) : [a.tidalId];
+			if (startIndex == null && how === 'load') startIndex = list.indexOf(a);
+			cmd = ['albumflow', 'tidalplay', 'cmd:' + how, 'ids:' + ids.join(',')];
+			if (how === 'load') cmd.push('index:' + startIndex);
+		} else if (a.tidalAlbum || a.playlist || a.mix || a.radio) {
+			// album from the TIDAL search (not in the library): play its tracks by id
+			if (!a.trackIds) {
+				rpc(player, remoteTracksCmd(a)).then(function (r) {
+					a.trackIds = (r.tracks_loop || []).map(function (tr) { return tr.id; });
+					if (a.trackIds.length) playAlbum(a, how, startIndex);
+					else toast(a.playlist || a.mix ? (a.mix ? 'Mix' : 'Playlist') + ' ist leer oder nicht verfügbar' : 'Album in TIDAL nicht verfügbar');
+				});
+				return;
+			}
+			cmd = ['albumflow', 'tidalplay', 'cmd:' + how, 'ids:' + a.trackIds.join(',')];
+			if (startIndex != null && how === 'load') cmd.push('index:' + startIndex);
+		} else {
+			cmd = ['playlistcontrol', 'cmd:' + how, 'album_id:' + a.id];
+			if (startIndex != null) cmd.push('play_index:' + startIndex);
+		}
+		rpc(player, cmd).then(function () {
+			toast(how === 'load' ? 'Spielt auf ' + playerName() : how === 'insert' ? 'Kommt als Nächstes' : 'Angehängt');
+			if (how === 'load') closeAlbum();
+			setTimeout(poll, 600);
+		});
+	}
+
+	// ---------- Players ----------
+	var players = [];
+	function playerName() {
+		for (var i = 0; i < players.length; i++) if (players[i].playerid === player) return players[i].name;
+		return 'Player';
+	}
+	function loadPlayers() {
+		return rpc('', ['players', 0, 100]).then(function (r) {
+			players = (r.players_loop || []).filter(function (p) { return p.connected; });
+			players.sort(function (a, b) { return a.name.localeCompare(b.name); });
+			var sel = $('player');
+			sel.innerHTML = '';
+			players.forEach(function (p) {
+				var o = document.createElement('option');
+				o.value = p.playerid;
+				o.textContent = p.name;
+				sel.appendChild(o);
+			});
+			if (wantPlayer) {
+				players.forEach(function (p) {
+					if (p.playerid.toLowerCase() === wantPlayer || p.name.toLowerCase() === wantPlayer) player = p.playerid;
+				});
+				wantPlayer = '';
+			}
+			if (!players.some(function (p) { return p.playerid === player; })) player = players.length ? players[0].playerid : '';
+			sel.value = player;
+			$('shPlayer').innerHTML = sel.innerHTML;
+			$('shPlayer').value = player;
+		});
+	}
+	// the player can also be changed while an album is turned around
+	$('shPlayer').addEventListener('change', function () {
+		if (this.value === player) return;
+		$('player').value = this.value;
+		$('player').dispatchEvent(new Event('change'));
+		toast('Player: ' + playerName());
+	});
+	$('player').addEventListener('change', function () {
+		player = this.value; store('player', player);
+		clearTimeout(volTimer); volTimer = null; volSent = null; volTarget = null; volHold = 0; $('kv').textContent = '–';
+		poll();
+		$('shPlayer').value = player;
+		if (songsMode()) loadSongs(); // each player can use a different TIDAL account
+		if (remoteMode()) loadRemote();
+	});
+
+	// ---------- Now playing ----------
+	var npRadio = null;
+	$('bRadio').addEventListener('click', function (e) { e.stopPropagation(); if (npRadio) startRadio(npRadio.id, npRadio.title, $('npImg').src); });
+	var npAlbumId = null, npMode = 'stop', npPower = false, volDragging = false;
+
+	// Heart: favourite state of the current TIDAL track for this player's TIDAL account
+	var HEART_OFF = '<path d="M16.5 3c-1.74 0-3.41.81-4.5 2.09C10.91 3.81 9.24 3 7.5 3 4.42 3 2 5.42 2 8.5c0 3.78 3.4 6.86 8.55 11.54L12 21.35l1.45-1.32C18.6 15.36 22 12.28 22 8.5 22 5.42 19.58 3 16.5 3zm-4.4 15.55-.1.1-.1-.1C7.14 14.24 4 11.39 4 8.5 4 6.5 5.5 5 7.5 5c1.54 0 3.04.99 3.57 2.36h1.87C13.46 5.99 14.96 5 16.5 5c2 0 3.5 1.5 3.5 3.5 0 2.89-3.14 5.74-7.9 10.05z"/>';
+	var HEART_ON = '<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>';
+	var favKey = null, favOn = false;
+	function showFav(on) {
+		favOn = !!on;
+		$('favIcon').innerHTML = favOn ? HEART_ON : HEART_OFF;
+		$('bFav').classList.toggle('on', favOn);
+		$('bFav').title = favOn ? 'Aus TIDAL-Favoriten entfernen' : 'Zu TIDAL-Favoriten hinzufügen';
+	}
+	function checkFav(rid) {
+		var key = rid ? player + '|' + rid : null;
+		$('bFav').classList.toggle('off', !rid);
+		if (key === favKey) return;
+		favKey = key;
+		showFav(false);
+		$('npAi').classList.add('off');
+		if (!rid) return;
+		rpc(player, ['albumflow', 'tidalfav', 'id:' + rid]).then(function (r) {
+			if (favKey !== key) return;
+			if (r.fav != null) showFav(+r.fav === 1);
+			$('npAi').classList.toggle('off', +r.ai !== 1);
+		});
+	}
+	showFav(false);
+	$('bFav').addEventListener('click', function (e) {
+		e.stopPropagation();
+		if (!npRadio) return;
+		var key = favKey, want = !favOn, b = $('bFav');
+		showFav(want); // optimistic
+		b.classList.add('busy');
+		rpc(player, ['albumflow', 'tidalfav', 'id:' + npRadio.id, 'set:' + (want ? 1 : 0)]).then(function (r) {
+			if (favKey === key) showFav(r.fav != null ? +r.fav === 1 : !want);
+		}, function () {
+			if (favKey === key) showFav(!want);
+		}).then(function () { b.classList.remove('busy'); });
+	});
+
+	// Track position: LMS reports the elapsed time on each poll, in between we
+	// advance it locally so the slider moves smoothly.
+	var posTime = 0, posDur = 0, posRate = 1, posAt = 0, seeking = false;
+	function setPosition(time, dur, canSeek, rate) {
+		posTime = time; posDur = dur; posRate = rate; posAt = Date.now();
+		$('prog').classList.toggle('off', !(dur > 0));
+		$('seek').disabled = !canSeek;
+		$('seek').max = String(Math.round(dur));
+		$('tDur').textContent = fmt(dur);
+		showPosition();
+	}
+	function currentTime() {
+		var t = posTime + (npMode === 'play' ? (Date.now() - posAt) / 1000 * posRate : 0);
+		return Math.max(0, Math.min(posDur || t, t));
+	}
+	function showPosition() {
+		if (seeking || !(posDur > 0)) return;
+		var t = currentTime();
+		$('seek').value = String(Math.round(t));
+		$('tCur').textContent = fmt(t);
+	}
+	$('seek').addEventListener('input', function () { seeking = true; $('tCur').textContent = fmt(+this.value); });
+	$('seek').addEventListener('change', function () {
+		var t = +this.value;
+		seeking = false;
+		posTime = t; posAt = Date.now();
+		rpc(player, ['time', t]).then(function () { setTimeout(poll, 400); });
+	});
+	setInterval(showPosition, 500);
+
+	$('power').addEventListener('click', function () {
+		if (!player) return;
+		npPower = !npPower;
+		$('power').classList.toggle('on', npPower);
+		rpc(player, ['power', npPower ? 1 : 0]).then(function () { setTimeout(poll, 400); });
+	});
+	var ICON_PLAY = '<path d="M8 5v14l11-7z"/>', ICON_PAUSE = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
+	function poll() {
+		if (!player) return;
+		rpc(player, ['status', '-', 1, 'tags:aleJu']).then(function (r) {
+			var t = (r.playlist_loop || [])[0];
+			npPower = !(r.power === 0 || r.power === '0');
+			npMode = npPower ? r.mode : 'stop';
+			$('power').classList.toggle('on', npPower);
+			$('playIcon').innerHTML = npMode === 'play' ? ICON_PAUSE : ICON_PLAY;
+			$('npEq').className = 'eq ' + (npMode === 'play' ? 'on' : npMode === 'pause' ? 'paused' : 'off');
+			npBar.classList.toggle('playing', npMode === 'play');
+			setPosition(t ? +r.time || 0 : 0, t ? +r.duration || 0 : 0, t && r.can_seek !== 0 && r.can_seek !== '0', +r.rate || 1);
+			if (r['mixer volume'] != null) volFromServer(Math.abs(+r['mixer volume']));
+			var rid = t ? tidalIdOf(t) : null;
+			npRadio = rid ? { id: rid, title: t.title } : null;
+			$('bRadio').classList.toggle('off', !rid);
+			checkFav(rid);
+			if (t) {
+				$('npT').textContent = t.title || '–';
+				$('npA').textContent = [t.artist, t.album].filter(Boolean).join(' – ');
+				npAlbumId = t.album_id || null;
+				var src = '/music/current/cover.jpg?player=' + encodeURIComponent(player) + '&t=' + encodeURIComponent((t.id || '') + (t.title || ''));
+				if ($('npImg').dataset.src !== src) { $('npImg').dataset.src = src; $('npImg').src = src; }
+			} else {
+				$('npT').textContent = 'Nichts in der Wiedergabeliste';
+				$('npA').textContent = playerName();
+				npAlbumId = null;
+				$('npImg').removeAttribute('src');
+				$('npImg').dataset.src = '';
+			}
+			if (list.length && !anim && !drag) render(); // refresh the EQ badge on the playing album
+			loadQueue();
+		}).catch(function () {});
+	}
+	$('bPlay').addEventListener('click', function () {
+		rpc(player, npMode === 'play' ? ['pause', '1'] : npMode === 'pause' ? ['pause', '0'] : ['play']).then(poll);
+	});
+	$('bPrev').addEventListener('click', function () { rpc(player, ['playlist', 'index', '-1']).then(poll); });
+	$('bNext').addEventListener('click', function () { rpc(player, ['playlist', 'index', '+1']).then(poll); });
+	// ---------- Volume knob ----------
+	// The knob shows the wanted volume; what is sent to the player follows it at most
+	// +3 every 150 ms (an accidental flick to 100 is not instant), lowering is immediate.
+	var volSent = null, volTarget = null, volTimer = null, volHold = 0;
+	function showVol(v) {
+		var k = $('knob');
+		k.style.setProperty('--a', (v * 2.7).toFixed(1) + 'deg');
+		k.setAttribute('aria-valuenow', v);
+		$('kv').textContent = String(v);
+	}
+	function volFromServer(v) {
+		if (volDragging || volTimer || Date.now() < volHold) return;
+		volSent = v; volTarget = v; showVol(v);
+	}
+	function setVol(v) {
+		if (!player || volSent == null) return;
+		volTarget = Math.max(0, Math.min(100, Math.round(v)));
+		showVol(volTarget);
+		if (!volTimer) pumpVol();
+	}
+	function pumpVol() {
+		volTimer = null;
+		if (volTarget == null || volTarget === volSent) return;
+		var next = volTarget > volSent ? Math.min(volTarget, volSent + 3) : volTarget;
+		volSent = next;
+		volHold = Date.now() + 1500; // ignore the polled value until the player caught up
+		rpc(player, ['mixer', 'volume', String(next)]);
+		if (next !== volTarget) volTimer = setTimeout(pumpVol, 150);
+	}
+	$('vDown').addEventListener('click', function (e) { e.stopPropagation(); setVol((volTarget == null ? 0 : volTarget) - 2); });
+	$('vUp').addEventListener('click', function (e) { e.stopPropagation(); setVol((volTarget == null ? 0 : volTarget) + 2); });
+	(function () {
+		var knob = $('knob'), lastAng = null, acc = 0;
+		function ang(x, y) {
+			var r = knob.getBoundingClientRect();
+			return Math.atan2(y - (r.top + r.height / 2), x - (r.left + r.width / 2)) * 180 / Math.PI;
+		}
+		function start(x, y) { volDragging = true; lastAng = ang(x, y); acc = volTarget == null ? 0 : volTarget; knob.classList.add('busy'); }
+		function move(x, y) {
+			if (lastAng == null) return;
+			var a = ang(x, y), d = a - lastAng;
+			if (d > 180) d -= 360; else if (d < -180) d += 360;
+			lastAng = a;
+			acc = Math.max(0, Math.min(100, acc + d / 4.5)); // ~450 degrees for 0..100
+			setVol(acc);
+		}
+		function end() { lastAng = null; volDragging = false; knob.classList.remove('busy'); }
+		if (window.PointerEvent) {
+			knob.addEventListener('pointerdown', function (e) { e.preventDefault(); e.stopPropagation(); knob.setPointerCapture(e.pointerId); start(e.clientX, e.clientY); });
+			knob.addEventListener('pointermove', function (e) { move(e.clientX, e.clientY); });
+			knob.addEventListener('pointerup', end);
+			knob.addEventListener('pointercancel', end);
+		} else {
+			knob.addEventListener('touchstart', function (e) { e.preventDefault(); e.stopPropagation(); start(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+			knob.addEventListener('touchmove', function (e) { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }, { passive: false });
+			knob.addEventListener('touchend', end);
+			knob.addEventListener('mousedown', function (e) { e.preventDefault(); start(e.clientX, e.clientY);
+				function mm(ev) { move(ev.clientX, ev.clientY); }
+				function mu() { end(); document.removeEventListener('mousemove', mm); document.removeEventListener('mouseup', mu); }
+				document.addEventListener('mousemove', mm); document.addEventListener('mouseup', mu); });
+		}
+		knob.addEventListener('click', function (e) { e.stopPropagation(); });
+		knob.addEventListener('wheel', function (e) { e.preventDefault(); setVol((volTarget == null ? 0 : volTarget) + (e.deltaY < 0 ? 1 : -1)); }, { passive: false });
+	})();
+	// Glas: mini player in the top bar, large popup on tap
+	var GLAS = /\bglas\b/.test(document.documentElement.className);
+	var npBar = document.querySelector('.np');
+	function npPopup(open, saver) {
+		npBar.classList.toggle('open', open);
+		$('npBg').classList.toggle('show', open);
+		$('npBg').classList.toggle('saver', !!(open && saver));
+		if (open) { qKey = ''; loadQueue(); }
+	}
+	// the current playlist (queue) in the large view; tap a row to jump there
+	var qKey = '';
+	function loadQueue() {
+		if (!player || !npBar.classList.contains('open')) return;
+		rpc(player, ['status', 0, 300, 'tags:adlJu']).then(function (r) {
+			var items = r.playlist_loop || [], cur = +r.playlist_cur_index || 0;
+			var key = player + '|' + cur + '|' + items.length + '|' + items.map(function (t) { return t.id; }).join(',');
+			if (key === qKey) return;
+			qKey = key;
+			var ul = $('npQueue');
+			ul.innerHTML = '';
+			var curLi = null, aiRows = [];
+			items.forEach(function (t, i) {
+				var li = document.createElement('li');
+				var idx = +t['playlist index'];
+				if (isNaN(idx)) idx = i;
+				if (idx === cur) { li.className = 'cur'; curLi = li; }
+				var nEl = document.createElement('span'); nEl.className = 'n'; nEl.textContent = idx + 1;
+				var tEl = document.createElement('span'); tEl.textContent = t.title || '';
+				if (t.artist) { var aEl = document.createElement('span'); aEl.className = 'q-a'; aEl.textContent = ' – ' + t.artist; tEl.appendChild(aEl); }
+				if (tidalIdOf(t)) aiRows.push([tidalIdOf(t), tEl]);
+				var dEl = document.createElement('span'); dEl.className = 'd'; dEl.textContent = t.duration ? fmt(t.duration) : '';
+				li.appendChild(nEl); li.appendChild(tEl); li.appendChild(dEl); li.appendChild(document.createElement('span'));
+				li.addEventListener('click', function (e) { e.stopPropagation(); rpc(player, ['playlist', 'index', idx]).then(function () { setTimeout(poll, 400); }); });
+				ul.appendChild(li);
+			});
+			if (!items.length) ul.innerHTML = '<li><span></span><span style="color:var(--muted)">Wiedergabeliste ist leer</span><span></span><span></span></li>';
+			if (curLi) ul.scrollTop = Math.max(0, curLi.offsetTop - ul.offsetTop - 80);
+			markAi(aiRows, function () { return qKey === key; });
+		}).catch(function () {});
+	}
+	$('npClose').addEventListener('click', function (e) { e.stopPropagation(); npPopup(false); });
+	$('npImg').addEventListener('click', function (e) { if (npBar.classList.contains('open')) { e.stopPropagation(); npPopup(false); } });
+
+	// screensaver: while music plays and nobody touched the frame for IDLE seconds, open the
+	// large now-playing view (?idle=<seconds>, 0 = off; default 30)
+	var IDLE = +((location.search.match(/[?&]idle=(\d+)/) || [])[1] || 30), lastTouch = Date.now();
+	['pointerdown', 'touchstart', 'mousedown', 'keydown', 'wheel'].forEach(function (ev) {
+		document.addEventListener(ev, function () { lastTouch = Date.now(); }, { passive: true, capture: true });
+	});
+	if (GLAS && IDLE > 0) setInterval(function () {
+		if (npMode !== 'play' || npBar.classList.contains('open') || openA || flipBusy) return;
+		if (document.activeElement && /^(INPUT|SELECT)$/.test(document.activeElement.tagName)) return;
+		if (Date.now() - lastTouch > IDLE * 1000) npPopup(true, true);
+	}, 1000);
+	if (GLAS) {
+		document.querySelector('.top').appendChild(npBar);
+		npBar.addEventListener('click', function (e) {
+			if (npBar.classList.contains('open')) return;
+			if (e.target.closest && e.target.closest('#bPlay')) return; // play/pause works right in the mini player
+			npPopup(true);
+		});
+		$('npBg').addEventListener('click', function () { npPopup(false); });
+	}
+	$('npInfo').addEventListener('click', function (e) {
+		if (GLAS && !npBar.classList.contains('open')) return;
+		if (GLAS) { e.stopPropagation(); npPopup(false); }
+		if (npAlbumId == null) return;
+		if ($('search').value) { $('search').value = ''; applyFilter(npAlbumId); return; }
+		for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(npAlbumId)) { goTo(i); return; }
+	});
+
+	// ---------- Start ----------
+	window.addEventListener('resize', measure);
+	measure();
+	// "Meine Lieder" depends on the player's TIDAL account, so load the players first
+	if (specialMode()) loadPlayers().then(function () { poll(); loadView(); }, loadView);
+	else { loadPlayers().then(function () { poll(); }); loadView(); }
+	setInterval(poll, 2500);
+	document.addEventListener('visibilitychange', function () { if (!document.hidden) { loadPlayers().then(poll); } });
+	stage.focus();
+})();
+</script>
+</body>
+</html>

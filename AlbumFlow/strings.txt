@@ -1,0 +1,11 @@
+PLUGIN_ALBUMFLOW
+	DE	AlbumFlow
+	EN	AlbumFlow
+
+PLUGIN_ALBUMFLOW_DESC
+	DE	Schlanker Touch-Skin mit 3D-Albumansicht zum Durchblättern. Aufruf: http://<server>:9000/AlbumFlow/
+	EN	Slim touch skin with a 3D album flow. Open http://<server>:9000/AlbumFlow/
+
+SKIN_ALBUMFLOW
+	DE	AlbumFlow
+	EN	AlbumFlow
