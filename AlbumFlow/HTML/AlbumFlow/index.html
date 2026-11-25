@@ -220,7 +220,7 @@ html.glas .np.open .btns { grid-area: btns; }
 html.glas .np.open .prog { grid-area: prog; }
 #npQueue, #npClose, #npQHead { display: none; }
 html.glas .np.open #npQueue { display: block; grid-area: q; justify-self: stretch; align-self: stretch; min-height: 0; overflow-y: auto;
-	-webkit-overflow-scrolling: touch; border-top: 0; padding: 30px 0 0; margin: 0; }
+	-webkit-overflow-scrolling: touch; border-top: 0; padding: 0; margin: 30px 0 0; } /* the list scrolls below the QUEUE heading */
 html.glas .np.open #npQHead { display: block; position: absolute; top: 22px; right: 70px; left: calc(45% + 30px); color: var(--muted);
 	font-size: 13px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; pointer-events: none; }
 html.glas .np.open #npClose { display: inline-flex; position: absolute; top: 12px; right: 12px; z-index: 2; }
@@ -230,7 +230,7 @@ html.glas .np.open #npClose { display: inline-flex; position: absolute; top: 12p
 		grid-template-areas: "img" "info" "btns" "prog" "q"; }
 	html.glas .np.open img { height: 32vh; }
 	html.glas .np.open #npQHead { display: none; }
-	html.glas .np.open #npQueue { padding-top: 0; }
+	html.glas .np.open #npQueue { margin-top: 0; }
 }
 html.glas .np.open .info { text-align: center; max-width: 100%; }
 html.glas .np.open .info .t { font-size: 18px; }
