@@ -9,3 +9,19 @@ PLUGIN_ALBUMFLOW_DESC
 SKIN_ALBUMFLOW
 	DE	AlbumFlow
 	EN	AlbumFlow
+
+PLUGIN_ALBUMFLOW_OPEN
+	DE	AlbumFlow öffnen
+	EN	Open AlbumFlow
+
+PLUGIN_ALBUMFLOW_LIBRARY
+	DE	Bibliothek
+	EN	Library
+
+PLUGIN_ALBUMFLOW_LIBRARY_DESC
+	DE	Welche Musik AlbumFlow unter „Meine Musik“ und „Alle“ zeigt. Mit einer virtuellen Bibliothek lassen sich z. B. Online-Dubletten ausblenden.
+	EN	Which music AlbumFlow shows under "My Music" and "All". A virtual library can for example hide online duplicates.
+
+PLUGIN_ALBUMFLOW_LIBRARY_ALL
+	DE	Alle Titel
+	EN	All tracks

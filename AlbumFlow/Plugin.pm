@@ -20,6 +20,10 @@ use base qw(Slim::Plugin::Base);
 
 use Slim::Utils::Log;
 use Slim::Utils::Cache;
+use Slim::Utils::Prefs;
+
+my $prefs = preferences('plugin.albumflow');
+$prefs->init({ library => '' });
 
 my $log = Slim::Utils::Log->addLogCategory({
 	category     => 'plugin.albumflow',
@@ -33,6 +37,11 @@ my %favsCache;   # TIDAL userId -> { ts => time, tracks => [...] }
 sub initPlugin {
 	my $class = shift;
 	$class->SUPER::initPlugin(@_);
+
+	if (main::WEBUI) {
+		require Plugins::AlbumFlow::Settings;
+		Plugins::AlbumFlow::Settings->new;
+	}
 
 	Slim::Control::Request::addDispatch(['albumflow', 'tidalfavs'], [1, 1, 1, \&_tidalFavs]);
 	Slim::Control::Request::addDispatch(['albumflow', 'tidalplay'], [1, 0, 1, \&_tidalPlay]);

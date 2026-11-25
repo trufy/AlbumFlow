@@ -13,7 +13,7 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 - Collections: albums, by artist, newest, tracks, playlists
 - Search by album or artist
 - Player selection, volume, play/pause/skip, power, large now-playing view (also as a screensaver)
-- **Any source in the flow:** your local library, each virtual library, and every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …). Pick a service under *Source*; its top folders appear under *Collection*, folders open in the flow, albums and playlists flip and play like albums
+- **Any source in the flow:** *My Music* (your local files), every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …) and *All* (the whole library). For a service its top folders appear under *Collection*; folders open in the flow, albums and playlists flip and play like albums
 - **TIDAL extras** (with the official TIDAL plugin, nothing patched): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
 - English and German interface (follows the browser language)
 - Embeddable: transparent "glass" theme for dashboards such as Home Assistant (see below)
@@ -32,6 +32,10 @@ AlbumFlow is a normal LMS plugin.
 4. Open `http://<your-server>:9000/AlbumFlow/` in a browser or on a tablet.
 
 Updates arrive through the normal plugin update mechanism.
+
+## Settings
+
+**Settings → Advanced → AlbumFlow** → *Library*: which library *My Music* and *All* show. Choose a virtual library there, for example one without online duplicates; default is all tracks.
 
 ## URL parameters
 

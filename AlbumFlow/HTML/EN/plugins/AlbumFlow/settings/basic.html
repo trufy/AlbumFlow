@@ -1,0 +1,16 @@
+[% PROCESS settings/header.html %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_OPEN" desc="" %]
+		<a href="/AlbumFlow/" target="_blank">/AlbumFlow/</a>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_LIBRARY" desc="PLUGIN_ALBUMFLOW_LIBRARY_DESC" %]
+		<select class="stdedit" name="pref_library" id="library">
+			<option value="" [% IF !prefs.pref_library %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_LIBRARY_ALL" | string %]</option>
+			[% FOREACH lib IN libraries %]
+			<option value="[% lib.id | html %]" [% IF prefs.pref_library == lib.id %]selected[% END %]>[% lib.name | html %]</option>
+			[% END %]
+		</select>
+	[% END %]
+
+[% PROCESS settings/footer.html %]
