@@ -1,0 +1,25 @@
+[% PROCESS settings/header.html %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_OPEN" desc="" %]
+		<a href="/AlbumFlow/" target="_blank">/AlbumFlow/</a>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_TIDAL_STREAMFIX" desc="PLUGIN_ALBUMFLOW_TIDAL_STREAMFIX_DESC" %]
+		<select class="stdedit" name="pref_tidalStreamFix" id="tidalStreamFix">
+			<option value="0" [% IF !prefs.pref_tidalStreamFix %]selected[% END %]>[% "OFF" | string %]</option>
+			<option value="1" [% IF prefs.pref_tidalStreamFix %]selected[% END %]>[% "ON" | string %]</option>
+		</select>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_TIDAL_AI" desc="PLUGIN_ALBUMFLOW_TIDAL_AI_DESC" %]
+		<select class="stdedit" name="pref_tidalAiFlag" id="tidalAiFlag">
+			<option value="0" [% IF !prefs.pref_tidalAiFlag %]selected[% END %]>[% "OFF" | string %]</option>
+			<option value="1" [% IF prefs.pref_tidalAiFlag %]selected[% END %]>[% "ON" | string %]</option>
+		</select>
+	[% END %]
+
+	[% WRAPPER setting title="" desc="" %]
+		<div class="prefDesc">[% "PLUGIN_ALBUMFLOW_RESTART_NOTE" | string %]</div>
+	[% END %]
+
+[% PROCESS settings/footer.html %]
