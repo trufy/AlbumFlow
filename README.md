@@ -72,7 +72,7 @@ Happy to share the complete dashboard setup (glass theme, tablet layout): just a
 
 ## Feedback
 
-- Lyrion forum thread: *link follows*
+- [Lyrion forum thread](https://forums.lyrion.org/forum/user-forums/3rd-party-software/1843884-announce-beta-albumflow-%E2%80%93-touch-web-interface-with-a-3d-album-flow)
 - [GitHub issues](https://github.com/trufy/AlbumFlow/issues): please include your Lyrion version, browser/device and, for TIDAL issues, the TIDAL plugin version.
 
 ## Licence
