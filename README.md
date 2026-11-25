@@ -10,7 +10,7 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 
 - 3D album flow with reflections, A–Z jump bar and position slider; swipe, mouse wheel or arrow keys
 - Tap the centre cover to flip it and see the tracks; play, add or insert the whole album or a single track
-- Collections: albums, **artists** (one tile per artist, tap to see their albums), albums by artist, recently added, playlists
+- Collections: albums, **artists** (one tile per artist; tap to flip it and see their albums, play them all or open one), albums by artist, recently added, playlists
 - Search by album or artist
 - Player selection, volume, play/pause/skip, power, large now-playing view (also as a screensaver)
 - **Any source in the flow:** *My Music* (your local files), every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …) and *All* (the whole library). For a service its top folders appear under *Collection*; folders open in the flow, albums and playlists flip and play like albums

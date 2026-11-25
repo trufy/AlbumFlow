@@ -129,6 +129,7 @@ button { background: none; border: 0; cursor: pointer; }
 .bhead img { width: 92px; height: 92px; object-fit: cover; border-radius: 8px; background: #22222a; }
 .bhead h2 { margin: 2px 0 4px; font-size: 20px; line-height: 1.2; }
 .bhead .sub { color: var(--muted); font-size: 14px; }
+.bhead .crumb { background: none; border: 0; padding: 0 8px 0 0; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 12px; }
 .pill { height: 38px; padding: 0 15px; border-radius: 19px; border: 1px solid var(--line); background-color: rgba(255,255,255,.07); font-weight: 600; }
 #shPlayer { margin-left: auto; max-width: 210px; padding: 0 12px; }
@@ -1042,8 +1043,9 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		var by = {};
 		albums.forEach(function (a) {
 			var k = a.artist || L('Ohne Namen'), t = by[k];
-			if (!t) t = by[k] = { id: 'ar-' + k, artistTile: true, album: k, n: 0, year: -1 };
+			if (!t) t = by[k] = { id: 'ar-' + k, artistTile: true, album: k, n: 0, year: -1, albums: [], artist_id: a.artist_id };
 			t.n++;
+			t.albums.push(a);
 			if ((+a.year || 0) >= t.year) { t.year = +a.year || 0; t.artwork_track_id = a.artwork_track_id; t.cover = a.cover; }
 		});
 		all = Object.keys(by).map(function (k) {
@@ -1063,7 +1065,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (artAlbums && artFor === key) { showArtists(); return; }
 		all = []; applyFilter();
 		$('empty').textContent = L('Lade Alben …');
-		var q = ['albums', 0, 99999, 'tags:jlayE', 'sort:artistalbum'];
+		var q = ['albums', 0, 99999, 'tags:jlayES', 'sort:artistalbum'];
 		if (libId) q.push('library_id:' + libId);
 		return rpc('', q).then(function (r) {
 			artAlbums = r.albums_loop || []; artFor = key;
@@ -1142,16 +1144,23 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		$('shT').textContent = a.album;
 		if (isTidal(a)) $('shT').appendChild(tidalBadge());
 		$('shA').textContent = subLine(a, true);
+		if (a.fromArtist) {
+			// album opened from an artist's back side: "‹ Artist" turns back to the album list
+			var cr = document.createElement('button'), ar = a.fromArtist;
+			cr.className = 'crumb';
+			cr.textContent = '‹ ' + ar.album;
+			cr.addEventListener('click', function () { if (flipBusy) return; openA = ar; fillBack(ar); });
+			$('shA').insertBefore(cr, $('shA').firstChild);
+		}
 		loadTracks(a);
 	}
 	function openAlbum(a) {
 		if (!a || flipBusy || openA) return;
 		if (a.svc && a.folder) { svcOpenFolder(a); return; }
-		if (a.artistTile) { store('artist', a.id); artistSel = a.album; store('artalbum', ''); showArtists(); return; }
 		openA = a;
 		$('shPlayer').value = player;
 		if (a.svc) store(svcKey(), a.id);
-		else if (!a.radio) store(a.song ? 'song' : a.lpl ? 'lpl' : artistsMode() ? 'artalbum' : remoteMode() ? 'playlist' : 'album', a.id);
+		else if (!a.radio) store(a.song ? 'song' : a.lpl ? 'lpl' : a.artistTile ? 'artist' : remoteMode() ? 'playlist' : 'album', a.id);
 		$('flFront').src = coverUrl(a, 500) || '/html/images/cover.png';
 		fillBack(a);
 
@@ -1261,6 +1270,23 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	}
 	function loadTracks(a) {
 		var ul = $('shTracks');
+		if (a.artistTile) {
+			// back of an artist: the albums, oldest first; a tap shows that album's tracks
+			ul.innerHTML = '';
+			ul.scrollTop = 0;
+			a.albums.slice().sort(function (x, y) { return (+x.year || 9999) - (+y.year || 9999) || String(x.album).localeCompare(String(y.album)); })
+				.forEach(function (al, i) {
+					var li = document.createElement('li');
+					var nEl = document.createElement('span'); nEl.className = 'n'; nEl.textContent = i + 1;
+					var tEl = document.createElement('span'); tEl.textContent = al.album;
+					if (isTidal(al)) tEl.appendChild(tidalBadge());
+					var dEl = document.createElement('span'); dEl.className = 'd'; dEl.textContent = +al.year ? al.year : '';
+					li.appendChild(nEl); li.appendChild(tEl); li.appendChild(dEl); li.appendChild(document.createElement('span'));
+					li.addEventListener('click', function () { if (flipBusy) return; al.fromArtist = a; openA = al; fillBack(al); });
+					ul.appendChild(li);
+				});
+			return;
+		}
 		if (a.song) {
 			// back of a song: the whole "Meine Lieder" list in the current order, this song marked
 			ul.innerHTML = '';
@@ -1354,6 +1380,9 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			}
 			cmd = ['albumflow', 'tidalplay', 'cmd:' + how, 'ids:' + a.trackIds.join(',')];
 			if (startIndex != null && how === 'load') cmd.push('index:' + startIndex);
+		} else if (a.artistTile) {
+			if (!a.artist_id) { toast(L('Keine Titel')); return; }
+			cmd = ['playlistcontrol', 'cmd:' + how, 'artist_id:' + a.artist_id];
 		} else if (a.lpl) {
 			cmd = ['playlistcontrol', 'cmd:' + how, 'playlist_id:' + a.lplId];
 			if (startIndex != null) cmd.push('play_index:' + startIndex);
