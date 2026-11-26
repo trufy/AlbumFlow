@@ -4,16 +4,18 @@
 		<title lang="EN">AlbumFlow (beta)</title>
 	</details>
 	<plugins>
-		<plugin name="AlbumFlow" version="0.9.7" minTarget="8.0" maxTarget="*">
+		<plugin name="AlbumFlow" version="0.9.8" minTarget="8.0" maxTarget="*">
 			<title lang="EN">AlbumFlow (beta)</title>
 			<title lang="DE">AlbumFlow (Beta)</title>
 			<desc lang="EN">Touch-friendly web interface with a 3D album flow. Open http://&lt;server&gt;:9000/AlbumFlow/ after installing.</desc>
 			<desc lang="DE">Touch-Oberfläche mit 3D-Albumansicht. Nach der Installation unter http://&lt;server&gt;:9000/AlbumFlow/ aufrufen.</desc>
+			<changes lang="EN">0.9.8: large now-playing view also in the dark theme (tap cover or title in the bottom bar); theme, language and screensaver in Settings → Advanced → AlbumFlow (URL parameters still override them); bigger covers.</changes>
+			<changes lang="DE">0.9.8: Grosse Jetzt-läuft-Ansicht auch im dunklen Design (Cover oder Titel unten antippen); Design, Sprache und Bildschirmschoner unter Einstellungen → Erweitert → AlbumFlow (URL-Parameter überschreiben sie weiterhin); grössere Cover.</changes>
 			<creator>Stephane Duvoisin</creator>
 			<category>misc</category>
 			<link>https://github.com/trufy/AlbumFlow</link>
-			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.7/AlbumFlow-0.9.7.zip</url>
-			<sha>f860367bd1d7861cf6128b676c320b478af6e33b</sha>
+			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.8/AlbumFlow-0.9.8.zip</url>
+			<sha>fc63d74c79e1efe62f34296141ea71ff1fddadc8</sha>
 		</plugin>
 	</plugins>
 </extensions>

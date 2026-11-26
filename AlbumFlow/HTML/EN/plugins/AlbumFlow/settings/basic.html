@@ -13,4 +13,27 @@
 		</select>
 	[% END %]
 
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_THEME" desc="PLUGIN_ALBUMFLOW_THEME_DESC" %]
+		<select class="stdedit" name="pref_theme" id="theme">
+			<option value="" [% IF !prefs.pref_theme %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_DARK" | string %]</option>
+			<option value="glas" [% IF prefs.pref_theme == 'glas' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_GLASS" | string %]</option>
+		</select>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_LANG" desc="PLUGIN_ALBUMFLOW_LANG_DESC" %]
+		<select class="stdedit" name="pref_lang" id="lang">
+			<option value="" [% IF !prefs.pref_lang %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_LANG_AUTO" | string %]</option>
+			<option value="en" [% IF prefs.pref_lang == 'en' %]selected[% END %]>English</option>
+			<option value="de" [% IF prefs.pref_lang == 'de' %]selected[% END %]>Deutsch</option>
+		</select>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_IDLE" desc="PLUGIN_ALBUMFLOW_IDLE_DESC" %]
+		<input type="text" class="stdedit" name="pref_idle" id="idle" value="[% prefs.pref_idle | html %]" size="5">
+	[% END %]
+
+	[% WRAPPER setting title="" desc="" %]
+		<div class="prefDesc">[% "PLUGIN_ALBUMFLOW_URL_NOTE" | string %]</div>
+	[% END %]
+
 [% PROCESS settings/footer.html %]

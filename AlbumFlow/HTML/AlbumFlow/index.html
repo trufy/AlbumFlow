@@ -9,8 +9,20 @@
 <meta name="theme-color" content="#0b0b0f">
 <title>AlbumFlow</title>
 <script>
-	// ?theme=glas: embedded in Home Assistant (Glas theme), transparent background, no brand
-	if (/[?&]theme=glas\b/.test(location.search)) document.documentElement.className += ' glas';
+	// settings from the plugin (Lyrion: Settings > Advanced > AlbumFlow), read before the page
+	// renders so the theme is right from the start; URL parameters override them per device
+	var AF_PREFS = {};
+	try {
+		var afx = new XMLHttpRequest();
+		afx.open('POST', '/jsonrpc.js', false);
+		afx.setRequestHeader('Content-Type', 'application/json');
+		afx.send(JSON.stringify({ id: 1, method: 'slim.request', params: ['', ['albumflow', 'prefs']] }));
+		AF_PREFS = JSON.parse(afx.responseText).result || {};
+	} catch (e) {}
+	// theme=glas: embedded e.g. in Home Assistant, transparent background, no brand
+	var afTheme = (location.search.match(/[?&]theme=([a-z]*)/) || [])[1];
+	if (afTheme == null) afTheme = AF_PREFS.theme || '';
+	if (afTheme === 'glas') document.documentElement.className += ' glas';
 </script>
 <style>
 :root {
@@ -209,39 +221,41 @@ html.glas .np:not(.open) .info .a, html.glas .np:not(.open) #bPrev, html.glas .n
 html.glas .np:not(.open) #bRadio, html.glas .np:not(.open) #bFav, html.glas .np:not(.open) .volbox, html.glas .np:not(.open) .prog { display: none; }
 html.glas .np:not(.open) .ib { width: 32px; height: 32px; }
 html.glas .np:not(.open) .ib svg { width: 20px; height: 20px; }
-html.glas .np.open { position: fixed; left: 3%; right: 3%; top: 3%; bottom: 3%; z-index: 5500; width: auto; max-width: none; margin: 0;
-	padding: 26px 26px 18px; background: #241d3f; box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+.np.open { position: fixed; left: 3%; right: 3%; top: 3%; bottom: 3%; z-index: 5500; width: auto; max-width: none; margin: 0;
+	padding: 26px 26px 18px; background: #18181f; box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
 	display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); grid-template-rows: minmax(0, 1fr) auto auto auto;
 	grid-template-areas: "img q" "info q" "btns q" "prog q"; column-gap: 30px; row-gap: 12px; justify-items: center; align-items: center; }
-html.glas .np.open img { grid-area: img; height: 100%; width: auto; max-width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 14px;
+.np.open img { grid-area: img; height: 100%; width: auto; max-width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 14px;
 	box-shadow: 0 18px 40px rgba(0, 0, 0, .5); cursor: pointer; }
-html.glas .np.open .info { grid-area: info; }
-html.glas .np.open .btns { grid-area: btns; }
-html.glas .np.open .prog { grid-area: prog; }
+.np.open .info { grid-area: info; }
+.np.open .btns { grid-area: btns; }
+.np.open .prog { grid-area: prog; }
 #npQueue, #npClose, #npQHead { display: none; }
-html.glas .np.open #npQueue { display: block; grid-area: q; justify-self: stretch; align-self: stretch; min-height: 0; overflow-y: auto;
+.np.open #npQueue { display: block; grid-area: q; justify-self: stretch; align-self: stretch; min-height: 0; overflow-y: auto;
 	-webkit-overflow-scrolling: touch; border-top: 0; padding: 0; margin: 30px 0 0; } /* the list scrolls below the QUEUE heading */
-html.glas .np.open #npQHead { display: block; position: absolute; top: 22px; right: 70px; left: calc(45% + 30px); color: var(--muted);
+.np.open #npQHead { display: block; position: absolute; top: 22px; right: 70px; left: calc(45% + 30px); color: var(--muted);
 	font-size: 13px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; pointer-events: none; }
-html.glas .np.open #npClose { display: inline-flex; position: absolute; top: 12px; right: 12px; z-index: 2; }
+.np.open #npClose { display: inline-flex; position: absolute; top: 12px; right: 12px; z-index: 2; }
 #npQueue li .q-a { color: var(--muted); }
+html.glas .np.open { background: #241d3f; }
+.np:not(.open) img, .np:not(.open) .info { cursor: pointer; }
 @media (max-aspect-ratio: 1/1) {
-	html.glas .np.open { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto minmax(0, 1fr);
+	.np.open { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto minmax(0, 1fr);
 		grid-template-areas: "img" "info" "btns" "prog" "q"; }
-	html.glas .np.open img { height: 32vh; }
-	html.glas .np.open #npQHead { display: none; }
-	html.glas .np.open #npQueue { margin-top: 0; }
+	.np.open img { height: 32vh; }
+	.np.open #npQHead { display: none; }
+	.np.open #npQueue { margin-top: 0; }
 }
-html.glas .np.open .info { text-align: center; max-width: 100%; }
-html.glas .np.open .info .t { font-size: 18px; }
-html.glas .np.open .btns { justify-content: center; flex-wrap: wrap; }
-html.glas .np.open .knob { width: 92px; height: 92px; }
-html.glas .np.open .knob .dial { top: 7px; right: 7px; bottom: 7px; left: 7px; }
-html.glas .np.open .knob .dial::after { top: 7px; height: 14px; width: 4px; margin-left: -2px; }
-html.glas .np.open .knob .kv { font-size: 20px; }
-html.glas .np.open .volbox { gap: 10px; margin-left: 10px; }
-html.glas .np.open .ib.sm { width: 42px; height: 42px; }
-html.glas .np.open .prog { width: 100%; margin-top: 0; }
+.np.open .info { text-align: center; max-width: 100%; }
+.np.open .info .t { font-size: 18px; }
+.np.open .btns { justify-content: center; flex-wrap: wrap; }
+.np.open .knob { width: 92px; height: 92px; }
+.np.open .knob .dial { top: 7px; right: 7px; bottom: 7px; left: 7px; }
+.np.open .knob .dial::after { top: 7px; height: 14px; width: 4px; margin-left: -2px; }
+.np.open .knob .kv { font-size: 20px; }
+.np.open .volbox { gap: 10px; margin-left: 10px; }
+.np.open .ib.sm { width: 42px; height: 42px; }
+.np.open .prog { width: 100%; margin-top: 0; }
 #npBg { position: fixed; top: 0; right: 0; bottom: 0; left: 0; z-index: 5400; background: rgba(18, 12, 36, 0.6); display: none; }
 #npBg.saver { background: rgba(12, 8, 26, 0.88); }
 #npBg.show { display: block; }
@@ -383,7 +397,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 
 	// ---------- Language ----------
 	// German or English, from ?lang=de|en or the browser language
-	var LANG = ((location.search.match(/[?&]lang=([a-z]{2})/) || [])[1] || (navigator.language || 'en').slice(0, 2)).toLowerCase() === 'de' ? 'de' : 'en';
+	var LANG = ((location.search.match(/[?&]lang=([a-z]{2})/) || [])[1] || window.AF_PREFS && AF_PREFS.lang || (navigator.language || 'en').slice(0, 2)).toLowerCase() === 'de' ? 'de' : 'en';
 	var EN = {"Album oder Künstler suchen": "Search album or artist", "Quelle": "Source", "Alle": "All", "Lokal": "Local", "Sammlung": "Collection", "Alben": "Albums", "Künstler": "Artists", "Neueste": "Newest", "Titel": "Tracks", "Vorschläge": "Suggestions", "Reihenfolge umkehren": "Reverse order", "Player ein/aus": "Player on/off", "Lade Alben …": "Loading albums …", "Alben durchblättern": "Browse albums", "Zum aktuellen Album springen": "Jump to the current album", "Von TIDAL als KI-generiert markiert": "Flagged as AI generated by TIDAL", "Zurück": "Back", "Weiter": "Next", "Zu TIDAL-Favoriten hinzufügen": "Add to TIDAL favourites", "Aus TIDAL-Favoriten entfernen": "Remove from TIDAL favourites", "Titelradio": "Track radio", "Lautstärke": "Volume", "Leiser": "Quieter", "Lauter": "Louder", "Zurück zum Cover Flow": "Back to the flow", "Wiedergabeliste": "Queue", "Position im Titel": "Position in track", "Zurückdrehen": "Turn back", "▶ Abspielen": "▶ Play", "Als Nächstes": "Play next", "Anhängen": "Add", "Keine Titel": "No tracks", "Lade Titel …": "Loading tracks …", "Wiedergabeliste ist leer": "The queue is empty", "Album in TIDAL nicht verfügbar": "Album not available on TIDAL", "Angehängt": "Added", "Bitte zuerst einen Player wählen": "Please choose a player first", "Eigene Playlist": "Own playlist", "Favorit": "Favourite", "Keine Alben gefunden": "No albums found", "Keine Lieblingssongs": "No favourite tracks", "Keine Treffer": "No matches", "Kommt als Nächstes": "Plays next", "Lade Meine Lieder …": "Loading My Tracks …", "Lyrion nicht erreichbar": "Lyrion not reachable", "Nichts in der Wiedergabeliste": "Nothing in the queue", "Ohne Namen": "Untitled", "Suche in TIDAL …": "Searching TIDAL …", "TIDAL Titelradio": "TIDAL track radio", "aus der TIDAL-Suche": "from TIDAL search", "Meine Lieder": "My Tracks", "Lade …": "Loading …", "Hier gibt es nichts anzuzeigen": "Nothing to show here", "Bibliotheken": "Libraries", "Alben nach Künstler": "Albums by artist", "Alle Künstler": "All artists", "%s Alben": "%s albums", "1 Album": "1 album", "Zuletzt hinzugefügt": "Recently added", "Meine Musik": "My Music", "Dienste": "Services", "Spielt auf %s": "Playing on %s", "Lade %s …": "Loading %s …", "Keine %s": "No %s", "%s gibt es nur aus TIDAL": "%s are only available from TIDAL", "%s ist leer oder nicht verfügbar": "%s is empty or not available", "%s Titel": "%s tracks", "hinzugefügt %s": "added %s", "geändert %s": "changed %s", "Titelradio: %s": "Track radio: %s", "Player: %s": "Player: %s", "CD %s": "Disc %s"};
 	function L(s) { return LANG === 'de' ? s : (EN[s] || s); }
 	document.documentElement.lang = LANG;
@@ -437,7 +451,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	// ---------- Layout ----------
 	function measure() {
 		var w = stage.clientWidth, h = stage.clientHeight;
-		size = Math.max(120, Math.min(h * 0.58, w * 0.46, 520));
+		size = Math.max(120, Math.min(h * 0.66, w * 0.5, 640));
 		space = size * 0.24;
 		gap = size * 0.62;
 		Object.keys(nodes).forEach(function (k) { sizeNode(nodes[k]); });
@@ -1694,27 +1708,30 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 
 	// screensaver: while music plays and nobody touched the frame for IDLE seconds, open the
 	// large now-playing view (?idle=<seconds>, 0 = off; default 30)
-	var IDLE = +((location.search.match(/[?&]idle=(\d+)/) || [])[1] || 30), lastTouch = Date.now();
+	var idleUrl = (location.search.match(/[?&]idle=(\d+)/) || [])[1], idlePref = window.AF_PREFS && AF_PREFS.idle;
+	var IDLE = idleUrl != null ? +idleUrl : idlePref != null && idlePref !== '' ? +idlePref || 0 : (GLAS ? 30 : 0), lastTouch = Date.now();
 	['pointerdown', 'touchstart', 'mousedown', 'keydown', 'wheel'].forEach(function (ev) {
 		document.addEventListener(ev, function () { lastTouch = Date.now(); }, { passive: true, capture: true });
 	});
-	if (GLAS && IDLE > 0) setInterval(function () {
+	if (IDLE > 0) setInterval(function () {
 		if (npMode !== 'play' || npBar.classList.contains('open') || openA || flipBusy) return;
 		if (document.activeElement && /^(INPUT|SELECT)$/.test(document.activeElement.tagName)) return;
 		if (Date.now() - lastTouch > IDLE * 1000) npPopup(true, true);
 	}, 1000);
-	if (GLAS) {
-		document.querySelector('.top').appendChild(npBar);
-		npBar.addEventListener('click', function (e) {
-			if (npBar.classList.contains('open')) return;
-			if (e.target.closest && e.target.closest('#bPlay')) return; // play/pause works right in the mini player
-			npPopup(true);
-		});
-		$('npBg').addEventListener('click', function () { npPopup(false); });
-	}
+	// tap the now-playing bar (cover or title) for the large view; in the glass theme the
+	// bar sits in the header as a mini player and opens on a tap anywhere but play/pause
+	if (GLAS) document.querySelector('.top').appendChild(npBar);
+	npBar.addEventListener('click', function (e) {
+		if (npBar.classList.contains('open')) return;
+		var t = e.target.closest ? e.target : null;
+		if (t && t.closest('#bPlay')) return; // play/pause works right in the mini player
+		if (!GLAS && t && !t.closest('#npImg, #npInfo')) return; // the other buttons keep their job
+		npPopup(true);
+	});
+	$('npBg').addEventListener('click', function () { npPopup(false); });
 	$('npInfo').addEventListener('click', function (e) {
-		if (GLAS && !npBar.classList.contains('open')) return;
-		if (GLAS) { e.stopPropagation(); npPopup(false); }
+		if (!npBar.classList.contains('open')) return;
+		e.stopPropagation(); npPopup(false);
 		if (npAlbumId == null) return;
 		if ($('search').value) { $('search').value = ''; applyFilter(npAlbumId); return; }
 		for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(npAlbumId)) { goTo(i); return; }

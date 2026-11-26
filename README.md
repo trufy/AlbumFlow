@@ -12,7 +12,7 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 - Tap the centre cover to flip it and see the tracks; play, add or insert the whole album or a single track
 - Collections: albums, **artists** (one tile per artist: tap it and their albums slide into the flow, tap beside them to go back; artists with a single album open it right away), albums by artist, recently added, playlists
 - Search by album or artist
-- Player selection, volume, play/pause/skip, power, large now-playing view (also as a screensaver)
+- Player selection, volume, play/pause/skip, power, large now-playing view with the queue (tap the cover or title in the bottom bar; optional screensaver)
 - **Any source in the flow:** *My Music* (your local files), every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …) and *All* (the whole library). For a service its top folders appear under *Collection*; folders open in the flow, albums and playlists flip and play like albums
 - **TIDAL extras** (with the official TIDAL plugin, nothing patched): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
 - English and German interface (follows the browser language)
@@ -35,7 +35,16 @@ Updates arrive through the normal plugin update mechanism.
 
 ## Settings
 
-**Settings → Advanced → AlbumFlow** → *Library*: which library *My Music* and *All* show. Choose a virtual library there, for example one without online duplicates; default is all tracks.
+**Settings → Advanced → AlbumFlow**:
+
+| Setting | Meaning |
+|---|---|
+| Library | Which library *My Music* and *All* show, e.g. a virtual library without online duplicates (default: all tracks) |
+| Theme | Dark, or Glass (transparent, for embedding) |
+| Language | Same as the browser, English or German |
+| Screensaver | Seconds without touch before the large now-playing view opens while music plays (0 = off; empty = glass 30, dark off) |
+
+The URL parameters below override these per device.
 
 ## URL parameters
 

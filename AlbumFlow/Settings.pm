@@ -14,7 +14,7 @@ sub name { 'PLUGIN_ALBUMFLOW' }
 
 sub page { 'plugins/AlbumFlow/settings/basic.html' }
 
-sub prefs { ($prefs, qw(library)) }
+sub prefs { ($prefs, qw(library theme lang idle)) }
 
 # the virtual libraries (e.g. "without online duplicates") for the library menu
 sub beforeRender {

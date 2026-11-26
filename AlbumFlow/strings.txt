@@ -25,3 +25,43 @@ PLUGIN_ALBUMFLOW_LIBRARY_DESC
 PLUGIN_ALBUMFLOW_LIBRARY_ALL
 	DE	Alle Titel
 	EN	All tracks
+
+PLUGIN_ALBUMFLOW_THEME
+	DE	Design
+	EN	Theme
+
+PLUGIN_ALBUMFLOW_THEME_DESC
+	DE	„Glas“ ist durchsichtig und für eingebettete Ansichten gedacht, z. B. ein Home-Assistant-Dashboard auf einem Wand-Tablet.
+	EN	"Glass" is transparent and meant for embedding, e.g. in a Home Assistant dashboard on a wall tablet.
+
+PLUGIN_ALBUMFLOW_THEME_DARK
+	DE	Dunkel
+	EN	Dark
+
+PLUGIN_ALBUMFLOW_THEME_GLASS
+	DE	Glas
+	EN	Glass
+
+PLUGIN_ALBUMFLOW_LANG
+	DE	Sprache
+	EN	Language
+
+PLUGIN_ALBUMFLOW_LANG_DESC
+	DE	Sprache der Oberfläche.
+	EN	Interface language.
+
+PLUGIN_ALBUMFLOW_LANG_AUTO
+	DE	Wie der Browser
+	EN	Same as the browser
+
+PLUGIN_ALBUMFLOW_IDLE
+	DE	Bildschirmschoner (Sekunden)
+	EN	Screensaver (seconds)
+
+PLUGIN_ALBUMFLOW_IDLE_DESC
+	DE	Während Musik läuft und niemand das Gerät berührt, öffnet sich nach so vielen Sekunden die grosse Jetzt-läuft-Ansicht. 0 = aus, leer = Standard (Glas 30, sonst aus).
+	EN	While music plays and nobody touches the device, the large now-playing view opens after this many seconds. 0 = off, empty = default (glass 30, otherwise off).
+
+PLUGIN_ALBUMFLOW_URL_NOTE
+	DE	Für einzelne Geräte lassen sich diese Einstellungen in der Adresse überschreiben: ?theme=glas, ?lang=en, ?idle=60, und ?player=Name wählt den Player vor.
+	EN	For a single device these settings can be overridden in the address: ?theme=glas, ?lang=en, ?idle=60, and ?player=Name preselects the player.

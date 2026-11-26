@@ -23,7 +23,7 @@ use Slim::Utils::Cache;
 use Slim::Utils::Prefs;
 
 my $prefs = preferences('plugin.albumflow');
-$prefs->init({ library => '' });
+$prefs->init({ library => '', theme => '', lang => '', idle => '' });
 
 my $log = Slim::Utils::Log->addLogCategory({
 	category     => 'plugin.albumflow',
@@ -43,6 +43,7 @@ sub initPlugin {
 		Plugins::AlbumFlow::Settings->new;
 	}
 
+	Slim::Control::Request::addDispatch(['albumflow', 'prefs'], [0, 1, 0, \&_prefs]);
 	Slim::Control::Request::addDispatch(['albumflow', 'tidalfavs'], [1, 1, 1, \&_tidalFavs]);
 	Slim::Control::Request::addDispatch(['albumflow', 'tidalplay'], [1, 0, 1, \&_tidalPlay]);
 	Slim::Control::Request::addDispatch(['albumflow', 'tidalplaylists'], [1, 1, 1, \&_tidalPlaylists]);
@@ -200,6 +201,13 @@ sub _tidalRadio {
 		$request->addResult(count => scalar @objs);
 		$request->setStatusDone;
 	}, $id);
+}
+
+# albumflow prefs: the settings the page needs at start (URL parameters override them)
+sub _prefs {
+	my $request = shift;
+	$request->addResult($_ => $prefs->get($_) // '') for qw(library theme lang idle);
+	$request->setStatusDone;
 }
 
 sub _noAccount {
