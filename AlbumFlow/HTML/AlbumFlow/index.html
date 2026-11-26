@@ -89,6 +89,10 @@ button { background: none; border: 0; cursor: pointer; }
 .stage:focus { outline: none; }
 .stage { position: relative; perspective: 1100px; perspective-origin: 50% 42%; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
 .cover { position: absolute; left: 50%; top: 42%; will-change: transform; transform-style: preserve-3d; border-radius: 6px; }
+.cover .mosaic { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;
+	border-radius: 6px; overflow: hidden; background: #22222a; box-shadow: 0 18px 40px rgba(0,0,0,.55); pointer-events: none;
+	-webkit-box-reflect: below 4px linear-gradient(transparent 62%, rgba(255,255,255,.22)); }
+.cover .mosaic img { border-radius: 0; box-shadow: none; -webkit-box-reflect: unset; }
 .cover img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 6px; background: #22222a;
 	box-shadow: 0 18px 40px rgba(0,0,0,.55);
 	-webkit-box-reflect: below 4px linear-gradient(transparent 62%, rgba(255,255,255,.22)); pointer-events: none; }
@@ -296,6 +300,8 @@ select.ctl::-ms-expand { display: none; }
 #settings { display: inline-flex; align-items: center; justify-content: center; width: 38px; padding: 0; color: var(--muted); text-decoration: none; }
 #settings svg { width: 20px; height: 20px; fill: currentColor; }
 html.glas #settings { display: none; }
+/* the accent-coloured buttons keep their colour on hover (only a little brighter) */
+html body .ib.big:hover, html body .pill.primary:hover { background: var(--accent); filter: brightness(1.1); }
 /* Light: the default theme in light mode (setting "Hell", or "Automatisch" on a light device) */
 html.light {
 	--bg: #f3f3f6;
@@ -308,9 +314,10 @@ html.light {
 	--accent-ink: #ffffff;
 	color-scheme: light;
 }
-html.light .ctl, html.light .pill { background-color: rgba(0, 0, 0, .045); }
+html.light .ctl, html.light .pill:not(.primary) { background-color: rgba(0, 0, 0, .045); }
 html.light .cover img, html.light .np img, html.light .face.front img, html.light .bhead img { background: #dcdce2; }
-html.light .cover img { box-shadow: 0 16px 34px rgba(0, 0, 0, .22); }
+html.light .cover > img, html.light .cover .mosaic { box-shadow: 0 16px 34px rgba(0, 0, 0, .22); }
+html.light .cover .mosaic { background: #dcdce2; }
 html.light .cover .ph { background: linear-gradient(135deg, #e8e8ee, #d2d2da); }
 html.light .ib:hover, html.light .rbtn:hover { background: rgba(0, 0, 0, .06); }
 html.light .tracks li:hover { background: rgba(0, 0, 0, .04); }
@@ -528,7 +535,14 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		n.className = 'cover';
 		n.dataset.i = i;
 		var src = coverUrl(a, 500);
-		if (src) {
+		if (a.covers) {
+			// artist with several albums: four covers in a grid (plain images, so covers from
+			// streaming services work as well)
+			var mo = document.createElement('div');
+			mo.className = 'mosaic';
+			a.covers.forEach(function (u) { var im = new Image(); im.decoding = 'async'; im.alt = ''; im.src = u; mo.appendChild(im); });
+			n.appendChild(mo);
+		} else if (src) {
 			var img = new Image();
 			img.decoding = 'async';
 			img.alt = '';
@@ -1119,10 +1133,17 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			if (!t) t = by[k] = { id: 'ar-' + k, artistTile: true, album: k, n: 0, year: -1 };
 			t.n++;
 			if ((+a.year || 0) >= t.year) { t.year = +a.year || 0; t.artwork_track_id = a.artwork_track_id; t.cover = a.cover; }
+			(t.all || (t.all = [])).push(a);
 		});
 		all = Object.keys(by).map(function (k) {
 			var t = by[k];
 			t.artist = t.n === 1 ? L('1 Album') : L('%s Alben').replace('%s', t.n);
+			// four or more different covers: a 2x2 mosaic like the playlists (newest albums first)
+			var seen = {};
+			t.covers = t.all.slice().sort(function (x, y) { return (+y.year || 0) - (+x.year || 0); }).map(function (a) { return coverUrl(a, 250); })
+				.filter(function (u) { if (!u || seen[u]) return false; seen[u] = 1; return true; }).slice(0, 4);
+			if (t.covers.length < 4) delete t.covers;
+			delete t.all;
 			delete t.year;
 			return t;
 		});
