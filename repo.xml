@@ -4,18 +4,18 @@
 		<title lang="EN">AlbumFlow (beta)</title>
 	</details>
 	<plugins>
-		<plugin name="AlbumFlow" version="0.9.10" minTarget="8.0" maxTarget="*">
+		<plugin name="AlbumFlow" version="0.9.11" minTarget="8.0" maxTarget="*">
 			<title lang="EN">AlbumFlow (beta)</title>
 			<title lang="DE">AlbumFlow (Beta)</title>
 			<desc lang="EN">Touch-friendly web interface with a 3D album flow. Open http://&lt;server&gt;:9000/AlbumFlow/ after installing.</desc>
 			<desc lang="DE">Touch-Oberfläche mit 3D-Albumansicht. Nach der Installation unter http://&lt;server&gt;:9000/AlbumFlow/ aufrufen.</desc>
-			<changes lang="EN">0.9.10: artists with several albums show a 2x2 cover mosaic; fixes: Play button looked disabled in the light theme, play button lost its colour on hover.</changes>
-			<changes lang="DE">0.9.10: Künstler mit mehreren Alben zeigen ein 2×2-Cover-Mosaik; Korrekturen: Abspielen-Knopf sah im hellen Design deaktiviert aus, Play-Knopf verlor beim Darüberfahren die Farbe.</changes>
+			<changes lang="EN">0.9.11: Artists use the order and sort letters from Lyrion (honours ARTISTSORT and ignored articles); A–Z bar in Artists and Playlists.</changes>
+			<changes lang="DE">0.9.11: Künstler in der Reihenfolge und mit den Sortierbuchstaben von Lyrion (beachtet ARTISTSORT und ignorierte Artikel); A–Z-Leiste bei Künstler und Playlists.</changes>
 			<creator>Stephane Duvoisin</creator>
 			<category>misc</category>
 			<link>https://github.com/trufy/AlbumFlow</link>
-			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.10/AlbumFlow-0.9.10.zip</url>
-			<sha>9414d5e44f268c7daf41e71b000c0e62703f1a92</sha>
+			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.11/AlbumFlow-0.9.11.zip</url>
+			<sha>49c6e262417afd421a903dc0625552a7d472e50c</sha>
 		</plugin>
 	</plugins>
 </extensions>

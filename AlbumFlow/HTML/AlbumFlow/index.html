@@ -759,6 +759,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	// ---------- Letters ----------
 	function sortKey(a) {
 		var s = $('sort').value;
+		if (a.textkey) { var tk = String(a.textkey).charAt(0).toUpperCase(); return /[A-Z]/.test(tk) ? tk : '#'; } // Lyrion's own sort letter (artistsort)
 		var k = s === 'artistalbum' ? (a.artist || '') : (s === 'album' || s === 'playlists' || s === 'artists' || s === 'lplaylists') ? (a.album || '') : '';
 		var ch = k.replace(/^(the|die|der|das|le|la|les)\s+/i, '').trim().charAt(0).toUpperCase();
 		ch = ch.normalize ? ch.normalize('NFD').charAt(0) : ch;
@@ -770,7 +771,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		box.innerHTML = '';
 		letterIdx = {};
 		var s = $('sort').value;
-		box.style.display = (s === 'album' || s === 'artistalbum' || s === 'playlists') ? 'flex' : 'none';
+		box.style.display = (s === 'album' || s === 'artistalbum' || s === 'playlists' || s === 'lplaylists' || (s === 'artists' && !artistSel)) ? 'flex' : 'none';
 		list.forEach(function (a, i) { var k = sortKey(a); if (!(k in letterIdx)) letterIdx[k] = i; });
 		'#ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(function (L) {
 			var b = document.createElement('button');
@@ -1106,7 +1107,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	}
 	// "Künstler": one tile per artist (cover of the newest album); a tap shows the artist's
 	// albums in the flow, "‹ Zurück" in the Sammlung menu goes back to all artists
-	var artAlbums = null, artFor = '', artistSel = null;
+	var artAlbums = null, artFor = '', artistSel = null, artOrder = {};
 	function artistMenu() {
 		setSortMenu('artists');
 		if (!artistSel) return;
@@ -1130,7 +1131,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		var by = {};
 		albums.forEach(function (a) {
 			var k = a.artist || L('Ohne Namen'), t = by[k];
-			if (!t) t = by[k] = { id: 'ar-' + k, artistTile: true, album: k, n: 0, year: -1 };
+			if (!t) t = by[k] = { id: 'ar-' + k, artistTile: true, album: k, n: 0, year: -1, textkey: (artOrder[k] || {}).textkey };
 			t.n++;
 			if ((+a.year || 0) >= t.year) { t.year = +a.year || 0; t.artwork_track_id = a.artwork_track_id; t.cover = a.cover; }
 			(t.all || (t.all = [])).push(a);
@@ -1147,9 +1148,13 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			delete t.year;
 			return t;
 		});
+		// Lyrion's artist order (honours ARTISTSORT and the "ignore articles" setting); artists it
+		// doesn't list (e.g. compilations) go to the end
 		all.sort(function (x, y) {
-			var kx = x.album.replace(/^(the|die|der|das|le|la|les)\s+/i, ''), ky = y.album.replace(/^(the|die|der|das|le|la|les)\s+/i, '');
-			return kx.localeCompare(ky, undefined, { sensitivity: 'base' });
+			var ox = artOrder[x.album], oy = artOrder[y.album];
+			if (ox && oy) return ox.i - oy.i;
+			if (ox || oy) return ox ? -1 : 1;
+			return x.album.localeCompare(y.album, undefined, { sensitivity: 'base' });
 		});
 		applyFilter(store('artist'));
 	}
@@ -1198,10 +1203,12 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (artAlbums && artFor === key) { showArtists(); return; }
 		all = []; applyFilter();
 		$('empty').textContent = L('Lade Alben …');
-		var q = ['albums', 0, 99999, 'tags:jlayE', 'sort:artistalbum'];
-		if (libId) q.push('library_id:' + libId);
-		return rpc('', q).then(function (r) {
-			artAlbums = r.albums_loop || []; artFor = key;
+		var q = ['albums', 0, 99999, 'tags:jlayE', 'sort:artistalbum'], qa = ['artists', 0, 99999, 'tags:s'];
+		if (libId) { q.push('library_id:' + libId); qa.push('library_id:' + libId); }
+		return Promise.all([rpc('', q), rpc('', qa).catch(function () { return {}; })]).then(function (r) {
+			artAlbums = r[0].albums_loop || []; artFor = key;
+			artOrder = {};
+			(r[1].artists_loop || []).forEach(function (x, i) { if (x.artist && !artOrder[x.artist]) artOrder[x.artist] = { i: i, textkey: x.textkey }; });
 			if (artistsMode()) showArtists();
 		}).catch(function () { $('empty').textContent = L('Lyrion nicht erreichbar'); });
 	}
