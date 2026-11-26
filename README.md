@@ -15,8 +15,9 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 - Player selection, volume, play/pause/skip, power, large now-playing view with the queue (tap the cover or title in the bottom bar; optional screensaver)
 - **Any source in the flow:** *My Music* (your local files), every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …) and *All* (the whole library). For a service its top folders appear under *Collection*; folders open in the flow, albums and playlists flip and play like albums
 - **TIDAL extras** (with the official TIDAL plugin, nothing patched): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
+- Light, dark or automatic look; the accent colour follows the cover of the playing track
 - English and German interface (follows the browser language)
-- Embeddable: transparent "glass" theme for dashboards such as Home Assistant (see below)
+- Embeddable: a transparent look made for dashboards such as Home Assistant (see below)
 - Single self-contained page, no build step, no extra dependencies
 
 ## Installation
@@ -35,14 +36,16 @@ Updates arrive through the normal plugin update mechanism.
 
 ## Settings
 
-**Settings → Advanced → AlbumFlow**:
+**Settings → Advanced → AlbumFlow** (or the gear icon in the header):
 
 | Setting | Meaning |
 |---|---|
 | Library | Which library *My Music* and *All* show, e.g. a virtual library without online duplicates (default: all tracks) |
-| Theme | Dark, or Glass (transparent, for embedding) |
+| Theme | Automatic (follows the device's light/dark mode, default), Light, Dark, or For Home Assistant (transparent, mini player at the top; meant for embedding) |
+| Colours from the cover | Light/dark: the accent colour follows the cover of the playing track |
+| Colour (Home Assistant theme) | Fixed accent and background colour for the Home Assistant theme: violet, blue, teal, green, orange, red, pink |
 | Language | Same as the browser, English or German |
-| Screensaver | Seconds without touch before the large now-playing view opens while music plays (0 = off; empty = glass 30, dark off) |
+| Screensaver | Seconds without touch before the large now-playing view opens while music plays (0 = off; empty = 30 for Home Assistant, otherwise off) |
 
 The URL parameters below override these per device.
 
@@ -51,26 +54,28 @@ The URL parameters below override these per device.
 | Parameter | Example | Meaning |
 |---|---|---|
 | `player` | `?player=Kitchen` | Preselect a player by name |
-| `theme=glas` | `?theme=glas` | Transparent glass look without header brand, for embedding |
+| `theme` | `?theme=ha` | `ha` = the Home Assistant / embedded look, `light`, `dark`, empty = automatic |
+| `color` | `?color=teal` | Colour of the Home Assistant theme |
+| `colors` | `?colors=0` | Colours from the cover off (`1` = on) |
 | `lang` | `?lang=en` | Interface language, `en` or `de` (default: browser language) |
-| `idle` | `?idle=60` | Seconds without touch before the now-playing screensaver opens (glass theme only; `0` = off, default 30) |
+| `idle` | `?idle=60` | Seconds without touch before the now-playing screensaver opens (`0` = off; default 30 with `theme=ha`, otherwise off) |
 
 ## Home Assistant
 
-AlbumFlow works nicely on a wall tablet as part of a Home Assistant dashboard, embedded with an iframe card and `?theme=glas` (Home Assistant and Lyrion must both be reached over http, or both over https, or the browser blocks the frame):
+AlbumFlow works nicely on a wall tablet as part of a Home Assistant dashboard, embedded with an iframe card and `?theme=ha` (Home Assistant and Lyrion must both be reached over http, or both over https, or the browser blocks the frame):
 
 ![AlbumFlow in Home Assistant on a wall tablet](docs/home-assistant.png)
 
 ```yaml
 type: iframe
-url: http://<your-server>:9000/AlbumFlow/index.html?theme=glas&player=<player name>
+url: http://<your-server>:9000/AlbumFlow/index.html?theme=ha&player=<player name>
 allow: autoplay
 grid_options:
   columns: full
   rows: 9
 ```
 
-Happy to share the complete dashboard setup (glass theme, tablet layout): just ask in the forum thread or open an issue.
+Happy to share the complete dashboard setup (theme, tablet layout): just ask in the forum thread or open an issue.
 
 ## Known limitations
 

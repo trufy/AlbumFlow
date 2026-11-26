@@ -23,7 +23,7 @@ use Slim::Utils::Cache;
 use Slim::Utils::Prefs;
 
 my $prefs = preferences('plugin.albumflow');
-$prefs->init({ library => '', theme => '', lang => '', idle => '' });
+$prefs->init({ library => '', theme => '', lang => '', idle => '', colors => '1', hacolor => '' });
 
 my $log = Slim::Utils::Log->addLogCategory({
 	category     => 'plugin.albumflow',
@@ -206,7 +206,7 @@ sub _tidalRadio {
 # albumflow prefs: the settings the page needs at start (URL parameters override them)
 sub _prefs {
 	my $request = shift;
-	$request->addResult($_ => $prefs->get($_) // '') for qw(library theme lang idle);
+	$request->addResult($_ => $prefs->get($_) // '') for qw(library theme lang idle colors hacolor);
 	$request->setStatusDone;
 }
 

@@ -15,8 +15,29 @@
 
 	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_THEME" desc="PLUGIN_ALBUMFLOW_THEME_DESC" %]
 		<select class="stdedit" name="pref_theme" id="theme">
-			<option value="" [% IF !prefs.pref_theme %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_DARK" | string %]</option>
-			<option value="glas" [% IF prefs.pref_theme == 'glas' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_GLASS" | string %]</option>
+			<option value="" [% IF !prefs.pref_theme || prefs.pref_theme == 'auto' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_AUTO" | string %]</option>
+			<option value="light" [% IF prefs.pref_theme == 'light' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_LIGHT" | string %]</option>
+			<option value="dark" [% IF prefs.pref_theme == 'dark' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_DARK" | string %]</option>
+			<option value="ha" [% IF prefs.pref_theme == 'ha' || prefs.pref_theme == 'glas' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_THEME_GLASS" | string %]</option>
+		</select>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_COLORS" desc="PLUGIN_ALBUMFLOW_COLORS_DESC" %]
+		<select class="stdedit" name="pref_colors" id="colors">
+			<option value="1" [% IF prefs.pref_colors != '0' %]selected[% END %]>[% "ON" | string %]</option>
+			<option value="0" [% IF prefs.pref_colors == '0' %]selected[% END %]>[% "OFF" | string %]</option>
+		</select>
+	[% END %]
+
+	[% WRAPPER setting title="PLUGIN_ALBUMFLOW_HACOLOR" desc="PLUGIN_ALBUMFLOW_HACOLOR_DESC" %]
+		<select class="stdedit" name="pref_hacolor" id="hacolor">
+			<option value="violet" [% IF prefs.pref_hacolor == 'violet' || !prefs.pref_hacolor %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_C_VIOLET" | string %]</option>
+			<option value="blue" [% IF prefs.pref_hacolor == 'blue' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_C_BLUE" | string %]</option>
+			<option value="teal" [% IF prefs.pref_hacolor == 'teal' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_C_TEAL" | string %]</option>
+			<option value="green" [% IF prefs.pref_hacolor == 'green' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_C_GREEN" | string %]</option>
+			<option value="orange" [% IF prefs.pref_hacolor == 'orange' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_C_ORANGE" | string %]</option>
+			<option value="red" [% IF prefs.pref_hacolor == 'red' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_C_RED" | string %]</option>
+			<option value="pink" [% IF prefs.pref_hacolor == 'pink' %]selected[% END %]>[% "PLUGIN_ALBUMFLOW_C_PINK" | string %]</option>
 		</select>
 	[% END %]
 

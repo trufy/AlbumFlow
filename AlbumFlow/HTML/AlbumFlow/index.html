@@ -19,10 +19,35 @@
 		afx.send(JSON.stringify({ id: 1, method: 'slim.request', params: ['', ['albumflow', 'prefs']] }));
 		AF_PREFS = JSON.parse(afx.responseText).result || {};
 	} catch (e) {}
-	// theme=glas: embedded e.g. in Home Assistant, transparent background, no brand
+	// theme=ha: embedded e.g. in Home Assistant, transparent background, no brand
 	var afTheme = (location.search.match(/[?&]theme=([a-z]*)/) || [])[1];
 	if (afTheme == null) afTheme = AF_PREFS.theme || '';
-	if (afTheme === 'glas') document.documentElement.className += ' glas';
+	if (afTheme !== 'ha' && afTheme !== 'glas') {
+		// default look: light, dark, or (empty / auto) like the device, and it follows a change live
+		var afMq = window.matchMedia ? window.matchMedia('(prefers-color-scheme: light)') : null;
+		var afLight = function () { return afTheme === 'light' || (afTheme !== 'dark' && !!(afMq && afMq.matches)); };
+		if (afLight()) document.documentElement.className += ' light';
+		if (afMq && afTheme !== 'dark' && afTheme !== 'light') {
+			var afOnMq = function () {
+				document.documentElement.classList.toggle('light', afLight());
+				if (window.afRecolor) window.afRecolor();
+			};
+			if (afMq.addEventListener) afMq.addEventListener('change', afOnMq); else if (afMq.addListener) afMq.addListener(afOnMq);
+		}
+	}
+	if (afTheme === 'ha' || afTheme === 'glas') {
+		document.documentElement.className += ' glas'; // 'glas' = old name of 'ha'
+		// colour of the Home Assistant look (setting, or ?color=): the backdrop is the violet
+		// default re-tinted to that hue (accent and buttons follow later in the page)
+		var afHue = { blue: 217, teal: 172, green: 142, orange: 27, red: 0, pink: 330 }[(location.search.match(/[?&]color=([a-z]+)/) || [])[1] || AF_PREFS.hacolor || ''];
+		if (afHue != null) {
+			var afSt = document.documentElement.style;
+			afSt.setProperty('--ha-bg1', 'hsl(' + afHue + ', 33%, 35%)');
+			afSt.setProperty('--ha-bg2', 'hsl(' + afHue + ', 35%, 29%)');
+			afSt.setProperty('--ha-bg3', 'hsl(' + afHue + ', 34%, 21%)');
+			afSt.setProperty('--ha-glow', 'hsla(' + (afHue + 55) % 360 + ', 38%, 45%, 0.42)');
+		}
+	}
 </script>
 <style>
 :root {
@@ -32,6 +57,7 @@
 	--text: #f2f2f5;
 	--muted: #9a9aa6;
 	--accent: #4fc3f7;
+	--accent-rgb: 79, 195, 247;
 	--accent-ink: #062030;
 	--radius: 14px;
 }
@@ -160,7 +186,7 @@ button { background: none; border: 0; cursor: pointer; }
 #bFav.on { color: #ff4f8b; }
 #bFav.busy { opacity: .5; pointer-events: none; }
 .tracks li:hover { background: rgba(255,255,255,.05); }
-.tracks li.cur { background: rgba(79,195,247,.14); }
+.tracks li.cur { background: rgba(var(--accent-rgb),.14); }
 .tracks li.cur span:nth-child(2) { color: var(--accent); font-weight: 600; }
 .tracks li.disc { display: block; cursor: default; color: var(--accent); font-weight: 600; font-size: 13px; padding: 14px 6px 6px; }
 .tracks li.disc:hover { background: none; }
@@ -187,12 +213,13 @@ html.glas {
 	--text: #f3effb;
 	--muted: rgba(236, 230, 248, 0.66);
 	--accent: #a78bfa;
+	--accent-rgb: 167, 139, 250;
 	--accent-ink: #ffffff;
 	--radius: 18px;
 }
 /* Opaque glass backdrop: desktop Chrome paints cross-origin iframes white when the colour schemes differ */
-html.glas { color-scheme: dark; background: radial-gradient(ellipse 70% 90% at 92% 0%, rgba(160, 72, 140, 0.42), transparent 70%),
-	linear-gradient(170deg, #4a3c78 0%, #3a3064 45%, #2b2449 100%); background-attachment: fixed; }
+html.glas { color-scheme: dark; background: radial-gradient(ellipse 70% 90% at 92% 0%, var(--ha-glow, rgba(160, 72, 140, 0.42)), transparent 70%),
+	linear-gradient(170deg, var(--ha-bg1, #4a3c78) 0%, var(--ha-bg2, #3a3064) 45%, var(--ha-bg3, #2b2449) 100%); background-attachment: fixed; }
 html.glas body { background: transparent; }
 html.glas .brand { display: none; }
 html.glas #search { flex: 1 1 160px; width: auto; min-width: 120px; }
@@ -204,7 +231,7 @@ html.glas .cover .ph { background: linear-gradient(135deg, #3a2f5e, #211b3a); }
 html.glas .face.front img, html.glas .bhead img, html.glas .np img { background: #2a2347; }
 html.glas .face.back { background: #2a2347; }
 html.glas .flip-bg.show { background: rgba(18, 12, 36, 0.72); }
-html.glas .tracks li.cur { background: rgba(167, 139, 250, 0.16); }
+html.glas .tracks li.cur { background: rgba(var(--accent-rgb), 0.16); }
 
 /* Glas (HA iframe): more room for the covers. The now-playing bar becomes a mini player at the
    end of the top bar; tapping it opens a large player popup. The scroll slider is hidden
@@ -222,7 +249,7 @@ html.glas .np:not(.open) #bRadio, html.glas .np:not(.open) #bFav, html.glas .np:
 html.glas .np:not(.open) .ib { width: 32px; height: 32px; }
 html.glas .np:not(.open) .ib svg { width: 20px; height: 20px; }
 .np.open { position: fixed; left: 3%; right: 3%; top: 3%; bottom: 3%; z-index: 5500; width: auto; max-width: none; margin: 0;
-	padding: 26px 26px 18px; background: #18181f; box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
+	padding: 26px 26px 18px; background: linear-gradient(160deg, rgba(var(--accent-rgb), .20), rgba(var(--accent-rgb), 0) 60%), #18181f; box-shadow: 0 30px 80px rgba(0, 0, 0, .6);
 	display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); grid-template-rows: minmax(0, 1fr) auto auto auto;
 	grid-template-areas: "img q" "info q" "btns q" "prog q"; column-gap: 30px; row-gap: 12px; justify-items: center; align-items: center; }
 .np.open img { grid-area: img; height: 100%; width: auto; max-width: 100%; aspect-ratio: 1 / 1; object-fit: cover; border-radius: 14px;
@@ -237,7 +264,7 @@ html.glas .np:not(.open) .ib svg { width: 20px; height: 20px; }
 	font-size: 13px; font-weight: 700; letter-spacing: .6px; text-transform: uppercase; pointer-events: none; }
 .np.open #npClose { display: inline-flex; position: absolute; top: 12px; right: 12px; z-index: 2; }
 #npQueue li .q-a { color: var(--muted); }
-html.glas .np.open { background: #241d3f; }
+html.glas .np.open { background: linear-gradient(160deg, rgba(var(--accent-rgb), .22), rgba(var(--accent-rgb), 0) 60%), var(--np-bg, #241d3f); }
 .np:not(.open) img, .np:not(.open) .info { cursor: pointer; }
 @media (max-aspect-ratio: 1/1) {
 	.np.open { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto auto auto minmax(0, 1fr);
@@ -265,6 +292,37 @@ select.ctl, select.pill { -webkit-appearance: none; -moz-appearance: none; appea
 	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23ece6f8' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
 	background-repeat: no-repeat; background-position: right 8px center; background-size: 18px 18px; }
 select.ctl::-ms-expand { display: none; }
+/* settings: a gear next to power, only in the light/dark looks (not embedded in Home Assistant) */
+#settings { display: inline-flex; align-items: center; justify-content: center; width: 38px; padding: 0; color: var(--muted); text-decoration: none; }
+#settings svg { width: 20px; height: 20px; fill: currentColor; }
+html.glas #settings { display: none; }
+/* Light: the default theme in light mode (setting "Hell", or "Automatisch" on a light device) */
+html.light {
+	--bg: #f3f3f6;
+	--panel: rgba(255, 255, 255, 0.94);
+	--line: rgba(0, 0, 0, 0.10);
+	--text: #17171d;
+	--muted: #6a6a76;
+	--accent: #0288d1;
+	--accent-rgb: 2, 136, 209;
+	--accent-ink: #ffffff;
+	color-scheme: light;
+}
+html.light .ctl, html.light .pill { background-color: rgba(0, 0, 0, .045); }
+html.light .cover img, html.light .np img, html.light .face.front img, html.light .bhead img { background: #dcdce2; }
+html.light .cover img { box-shadow: 0 16px 34px rgba(0, 0, 0, .22); }
+html.light .cover .ph { background: linear-gradient(135deg, #e8e8ee, #d2d2da); }
+html.light .ib:hover, html.light .rbtn:hover { background: rgba(0, 0, 0, .06); }
+html.light .tracks li:hover { background: rgba(0, 0, 0, .04); }
+html.light .knob { background: conic-gradient(from -135deg, var(--accent) 0 var(--a), rgba(0, 0, 0, .12) var(--a) 270deg, transparent 270deg 360deg); }
+html.light .knob .dial { background: #ffffff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .6), 0 2px 6px rgba(0, 0, 0, .18); }
+html.light .face.back { background: #ffffff; box-shadow: 0 30px 80px rgba(0, 0, 0, .25); }
+html.light .flip-bg.show { background: rgba(0, 0, 0, .35); }
+html.light #npBg { background: rgba(0, 0, 0, .3); }
+html.light .np.open { background: linear-gradient(160deg, rgba(var(--accent-rgb), .14), rgba(var(--accent-rgb), 0) 60%), #f7f7fa; box-shadow: 0 30px 80px rgba(0, 0, 0, .25); }
+html.light .aib { background: rgba(0, 0, 0, .78); color: #ffffff; }
+html.light select.ctl, html.light select.pill { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2333333b' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); }
+
 /* service and library names can be long: the menus stay compact, the list shows the full name */
 #src, #sort { max-width: 170px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; }
 
@@ -283,11 +341,11 @@ select.ctl::-ms-expand { display: none; }
 	background: rgba(10, 6, 24, .62); pointer-events: none; z-index: 2; }
 .cover .eq i { width: 4px; }
 /* Glas: a more obvious mini player */
-html.glas .np:not(.open) { border-color: rgba(167, 139, 250, .55); background: rgba(167, 139, 250, .14); padding-right: 4px;
-	box-shadow: 0 0 0 1px rgba(167, 139, 250, .18), 0 0 16px rgba(167, 139, 250, .22); }
+html.glas .np:not(.open) { border-color: rgba(var(--accent-rgb), .55); background: rgba(var(--accent-rgb), .14); padding-right: 4px;
+	box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .18), 0 0 16px rgba(var(--accent-rgb), .22); }
 html.glas .np.playing:not(.open) { -webkit-animation: npglow 2.4s ease-in-out infinite; animation: npglow 2.4s ease-in-out infinite; }
-@-webkit-keyframes npglow { 50% { box-shadow: 0 0 0 1px rgba(167, 139, 250, .35), 0 0 24px rgba(167, 139, 250, .45); } }
-@keyframes npglow { 50% { box-shadow: 0 0 0 1px rgba(167, 139, 250, .35), 0 0 24px rgba(167, 139, 250, .45); } }
+@-webkit-keyframes npglow { 50% { box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .35), 0 0 24px rgba(var(--accent-rgb), .45); } }
+@keyframes npglow { 50% { box-shadow: 0 0 0 1px rgba(var(--accent-rgb), .35), 0 0 24px rgba(var(--accent-rgb), .45); } }
 html.glas .np:not(.open) img { width: 34px; height: 34px; }
 html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 
@@ -308,7 +366,6 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 <body>
 <div class="app">
 	<header class="top">
-		<div class="brand">Album<span>Flow</span></div>
 		<input id="search" class="ctl" type="search" placeholder="Album oder Künstler suchen" autocomplete="off">
 		<select id="src" class="ctl" title="Quelle">
 			<option value="local">Meine Musik</option>
@@ -329,6 +386,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		<button id="dir" class="ctl" title="Reihenfolge umkehren"><svg viewBox="0 0 24 24"><path d="M11 4h2v12l5.5-5.5 1.42 1.42L12 19.84l-7.92-7.92L5.5 10.5 11 16z"/></svg></button>
 		<select id="player" class="ctl" title="Player"></select>
 		<button id="power" class="ctl" title="Player ein/aus"><svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17-1.42 1.42A6.92 6.92 0 0 1 19 12a7 7 0 1 1-11.42-5.42L6.17 5.17A8.93 8.93 0 0 0 3 12a9 9 0 0 0 18 0c0-2.74-1.23-5.18-3.17-6.83z"/></svg></button>
+		<a id="settings" class="ctl" href="/plugins/AlbumFlow/settings/basic.html" target="_blank" rel="noopener" title="Einstellungen"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.62.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg></a>
 	</header>
 
 	<main class="stage" id="stage" tabindex="0">
@@ -398,7 +456,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	// ---------- Language ----------
 	// German or English, from ?lang=de|en or the browser language
 	var LANG = ((location.search.match(/[?&]lang=([a-z]{2})/) || [])[1] || window.AF_PREFS && AF_PREFS.lang || (navigator.language || 'en').slice(0, 2)).toLowerCase() === 'de' ? 'de' : 'en';
-	var EN = {"Album oder Künstler suchen": "Search album or artist", "Quelle": "Source", "Alle": "All", "Lokal": "Local", "Sammlung": "Collection", "Alben": "Albums", "Künstler": "Artists", "Neueste": "Newest", "Titel": "Tracks", "Vorschläge": "Suggestions", "Reihenfolge umkehren": "Reverse order", "Player ein/aus": "Player on/off", "Lade Alben …": "Loading albums …", "Alben durchblättern": "Browse albums", "Zum aktuellen Album springen": "Jump to the current album", "Von TIDAL als KI-generiert markiert": "Flagged as AI generated by TIDAL", "Zurück": "Back", "Weiter": "Next", "Zu TIDAL-Favoriten hinzufügen": "Add to TIDAL favourites", "Aus TIDAL-Favoriten entfernen": "Remove from TIDAL favourites", "Titelradio": "Track radio", "Lautstärke": "Volume", "Leiser": "Quieter", "Lauter": "Louder", "Zurück zum Cover Flow": "Back to the flow", "Wiedergabeliste": "Queue", "Position im Titel": "Position in track", "Zurückdrehen": "Turn back", "▶ Abspielen": "▶ Play", "Als Nächstes": "Play next", "Anhängen": "Add", "Keine Titel": "No tracks", "Lade Titel …": "Loading tracks …", "Wiedergabeliste ist leer": "The queue is empty", "Album in TIDAL nicht verfügbar": "Album not available on TIDAL", "Angehängt": "Added", "Bitte zuerst einen Player wählen": "Please choose a player first", "Eigene Playlist": "Own playlist", "Favorit": "Favourite", "Keine Alben gefunden": "No albums found", "Keine Lieblingssongs": "No favourite tracks", "Keine Treffer": "No matches", "Kommt als Nächstes": "Plays next", "Lade Meine Lieder …": "Loading My Tracks …", "Lyrion nicht erreichbar": "Lyrion not reachable", "Nichts in der Wiedergabeliste": "Nothing in the queue", "Ohne Namen": "Untitled", "Suche in TIDAL …": "Searching TIDAL …", "TIDAL Titelradio": "TIDAL track radio", "aus der TIDAL-Suche": "from TIDAL search", "Meine Lieder": "My Tracks", "Lade …": "Loading …", "Hier gibt es nichts anzuzeigen": "Nothing to show here", "Bibliotheken": "Libraries", "Alben nach Künstler": "Albums by artist", "Alle Künstler": "All artists", "%s Alben": "%s albums", "1 Album": "1 album", "Zuletzt hinzugefügt": "Recently added", "Meine Musik": "My Music", "Dienste": "Services", "Spielt auf %s": "Playing on %s", "Lade %s …": "Loading %s …", "Keine %s": "No %s", "%s gibt es nur aus TIDAL": "%s are only available from TIDAL", "%s ist leer oder nicht verfügbar": "%s is empty or not available", "%s Titel": "%s tracks", "hinzugefügt %s": "added %s", "geändert %s": "changed %s", "Titelradio: %s": "Track radio: %s", "Player: %s": "Player: %s", "CD %s": "Disc %s"};
+	var EN = {"Album oder Künstler suchen": "Search album or artist", "Quelle": "Source", "Alle": "All", "Lokal": "Local", "Sammlung": "Collection", "Alben": "Albums", "Künstler": "Artists", "Neueste": "Newest", "Titel": "Tracks", "Vorschläge": "Suggestions", "Reihenfolge umkehren": "Reverse order", "Player ein/aus": "Player on/off", "Lade Alben …": "Loading albums …", "Alben durchblättern": "Browse albums", "Zum aktuellen Album springen": "Jump to the current album", "Von TIDAL als KI-generiert markiert": "Flagged as AI generated by TIDAL", "Zurück": "Back", "Weiter": "Next", "Zu TIDAL-Favoriten hinzufügen": "Add to TIDAL favourites", "Aus TIDAL-Favoriten entfernen": "Remove from TIDAL favourites", "Titelradio": "Track radio", "Lautstärke": "Volume", "Leiser": "Quieter", "Lauter": "Louder", "Zurück zum Cover Flow": "Back to the flow", "Wiedergabeliste": "Queue", "Position im Titel": "Position in track", "Zurückdrehen": "Turn back", "▶ Abspielen": "▶ Play", "Als Nächstes": "Play next", "Anhängen": "Add", "Keine Titel": "No tracks", "Lade Titel …": "Loading tracks …", "Wiedergabeliste ist leer": "The queue is empty", "Album in TIDAL nicht verfügbar": "Album not available on TIDAL", "Angehängt": "Added", "Bitte zuerst einen Player wählen": "Please choose a player first", "Eigene Playlist": "Own playlist", "Favorit": "Favourite", "Keine Alben gefunden": "No albums found", "Keine Lieblingssongs": "No favourite tracks", "Keine Treffer": "No matches", "Kommt als Nächstes": "Plays next", "Lade Meine Lieder …": "Loading My Tracks …", "Lyrion nicht erreichbar": "Lyrion not reachable", "Nichts in der Wiedergabeliste": "Nothing in the queue", "Ohne Namen": "Untitled", "Suche in TIDAL …": "Searching TIDAL …", "TIDAL Titelradio": "TIDAL track radio", "aus der TIDAL-Suche": "from TIDAL search", "Meine Lieder": "My Tracks", "Lade …": "Loading …", "Hier gibt es nichts anzuzeigen": "Nothing to show here", "Bibliotheken": "Libraries", "Einstellungen": "Settings", "Alben nach Künstler": "Albums by artist", "Alle Künstler": "All artists", "%s Alben": "%s albums", "1 Album": "1 album", "Zuletzt hinzugefügt": "Recently added", "Meine Musik": "My Music", "Dienste": "Services", "Spielt auf %s": "Playing on %s", "Lade %s …": "Loading %s …", "Keine %s": "No %s", "%s gibt es nur aus TIDAL": "%s are only available from TIDAL", "%s ist leer oder nicht verfügbar": "%s is empty or not available", "%s Titel": "%s tracks", "hinzugefügt %s": "added %s", "geändert %s": "changed %s", "Titelradio: %s": "Track radio: %s", "Player: %s": "Player: %s", "CD %s": "Disc %s"};
 	function L(s) { return LANG === 'de' ? s : (EN[s] || s); }
 	document.documentElement.lang = LANG;
 	if (LANG !== 'de') {
@@ -1563,7 +1621,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	var ICON_PLAY = '<path d="M8 5v14l11-7z"/>', ICON_PAUSE = '<path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/>';
 	function poll() {
 		if (!player) return;
-		rpc(player, ['status', '-', 1, 'tags:aleJu']).then(function (r) {
+		rpc(player, ['status', '-', 1, 'tags:aleJKcu']).then(function (r) {
 			var t = (r.playlist_loop || [])[0];
 			npPower = !(r.power === 0 || r.power === '0');
 			npMode = npPower ? r.mode : 'stop';
@@ -1582,7 +1640,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 				$('npA').textContent = [t.artist, t.album].filter(Boolean).join(' – ');
 				npAlbumId = t.album_id || null;
 				var src = '/music/current/cover.jpg?player=' + encodeURIComponent(player) + '&t=' + encodeURIComponent((t.id || '') + (t.title || ''));
-				if ($('npImg').dataset.src !== src) { $('npImg').dataset.src = src; $('npImg').src = src; }
+				if ($('npImg').dataset.src !== src) { $('npImg').dataset.src = src; $('npImg').src = src; colorSource(t); }
 			} else {
 				$('npT').textContent = L('Nichts in der Wiedergabeliste');
 				$('npA').textContent = playerName();
@@ -1736,6 +1794,75 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if ($('search').value) { $('search').value = ''; applyFilter(npAlbumId); return; }
 		for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(npAlbumId)) { goTo(i); return; }
 	});
+
+	// ---------- Colours from the cover ----------
+	// Like Material's "colour from cover art": the accent colour follows the cover of the
+	// playing track (setting "Farben aus dem Cover", ?colors=0|1). The cover comes from Lyrion
+	// itself (same origin), so it can be read on a small canvas.
+	var colorsUrl = (location.search.match(/[?&]colors=([01])/) || [])[1];
+	var COLORS = colorsUrl != null ? colorsUrl === '1' : !(window.AF_PREFS && String(AF_PREFS.colors) === '0');
+	function setAccent(rgb) {
+		var st = document.documentElement.style;
+		if (!rgb) { ['--accent', '--accent-rgb', '--accent-ink'].forEach(function (v) { st.removeProperty(v); }); return; }
+		var lum = (0.299 * rgb[0] + 0.587 * rgb[1] + 0.114 * rgb[2]) / 255;
+		st.setProperty('--accent', 'rgb(' + rgb.join(',') + ')');
+		st.setProperty('--accent-rgb', rgb.join(', '));
+		st.setProperty('--accent-ink', lum > 0.6 ? '#111116' : '#ffffff');
+	}
+	function hsl2rgb(h, s, l) {
+		function f(n) { var k = (n + h / 30) % 12, a = s * Math.min(l, 1 - l); return Math.round(255 * (l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1)))); }
+		return [f(0), f(8), f(4)];
+	}
+	// /music/current/cover.jpg redirects to the service's server for streamed tracks, which
+	// makes the canvas unreadable; a small copy through Lyrion's own image proxy (remote) or
+	// the library cover (local) stays on this server
+	var colorImg = new Image();
+	function colorSource(t) {
+		if (GLAS || !COLORS) return;
+		var u = t.artwork_url || '', m = /^\/?imageproxy\/([^/]+)\//.exec(u), src = '';
+		if (m) src = '/imageproxy/' + m[1] + '/image_64x64_o';
+		else if (/^https?:/.test(u)) src = '/imageproxy/' + encodeURIComponent(u) + '/image_64x64_o';
+		else if (t.coverid) src = '/music/' + encodeURIComponent(t.coverid) + '/cover_64x64_o';
+		if (src) colorImg.src = src; else setAccent(null);
+	}
+	colorImg.addEventListener('load', function () { coverColors(colorImg); });
+	window.afRecolor = function () { if (colorImg.naturalWidth) coverColors(colorImg); }; // device switched light/dark
+	function coverColors(img) {
+		if (GLAS || !COLORS || !img || !img.naturalWidth) return; // Home Assistant look: fixed colour, see below
+		try {
+			var N = 28, cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+			cv.width = cv.height = N;
+			ctx.drawImage(img, 0, 0, N, N);
+			var d = ctx.getImageData(0, 0, N, N).data, buckets = [];
+			for (var i = 0; i < d.length; i += 4) {
+				var r = d[i] / 255, g = d[i + 1] / 255, b = d[i + 2] / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, c = mx - mn;
+				if (c < 0.12 || l < 0.12 || l > 0.92) continue; // grey, black, white
+				var s = c / (1 - Math.abs(2 * l - 1)), h = mx === r ? 60 * (((g - b) / c) % 6) : mx === g ? 60 * ((b - r) / c + 2) : 60 * ((r - g) / c + 4);
+				if (h < 0) h += 360;
+				var k = Math.floor(h / 30), w = s * (1 - Math.abs(l - 0.5));
+				var bk = buckets[k] || (buckets[k] = { w: 0, h: 0, s: 0 });
+				bk.w += w; bk.h += h * w; bk.s += s * w;
+			}
+			var best = null;
+			buckets.forEach(function (bk) { if (bk && (!best || bk.w > best.w)) best = bk; });
+			if (!best || best.w < 4) { setAccent(null); return; } // (almost) no colour in the cover
+			// a bright, saturated version of the main colour reads well on the dark background
+			var lightUi = document.documentElement.classList.contains('light');
+			setAccent(hsl2rgb(best.h / best.w, Math.max(0.5, Math.min(0.85, best.s / best.w)), lightUi ? 0.42 : 0.64));
+		} catch (e) { setAccent(null); }
+	}
+	// Home Assistant look: one fixed colour to match the dashboard (setting, or ?color=blue);
+	// the large view gets a dark background of the same hue, like the violet default
+	var HA_COLORS = { violet: [167, 139, 250, 262], blue: [96, 165, 250, 217], teal: [45, 212, 191, 172], green: [74, 222, 128, 142],
+		orange: [251, 146, 60, 27], red: [248, 113, 113, 0], pink: [244, 114, 182, 330] };
+	if (GLAS) {
+		var hc = HA_COLORS[(location.search.match(/[?&]color=([a-z]+)/) || [])[1] || (window.AF_PREFS && AF_PREFS.hacolor) || 'violet'];
+		if (hc && hc[3] !== 262) {
+			setAccent(hc.slice(0, 3));
+			document.documentElement.style.setProperty('--accent-ink', '#ffffff');
+			document.documentElement.style.setProperty('--np-bg', 'rgb(' + hsl2rgb(hc[3], 0.36, 0.18).join(',') + ')');
+		}
+	}
 
 	// ---------- Start ----------
 	window.addEventListener('resize', measure);

@@ -31,16 +31,24 @@ PLUGIN_ALBUMFLOW_THEME
 	EN	Theme
 
 PLUGIN_ALBUMFLOW_THEME_DESC
-	DE	„Glas“ ist durchsichtig und für eingebettete Ansichten gedacht, z. B. ein Home-Assistant-Dashboard auf einem Wand-Tablet.
-	EN	"Glass" is transparent and meant for embedding, e.g. in a Home Assistant dashboard on a wall tablet.
+	DE	„Für Home Assistant“ ist durchsichtig, ohne Logo und mit Mini-Player oben, gedacht zum Einbetten, z. B. in ein Home-Assistant-Dashboard auf einem Wand-Tablet (in der Adresse: ?theme=ha).
+	EN	"For Home Assistant" is transparent, without logo and with a mini player at the top, meant for embedding, e.g. in a Home Assistant dashboard on a wall tablet (in the address: ?theme=ha).
 
 PLUGIN_ALBUMFLOW_THEME_DARK
 	DE	Dunkel
 	EN	Dark
 
+PLUGIN_ALBUMFLOW_THEME_LIGHT
+	DE	Hell
+	EN	Light
+
+PLUGIN_ALBUMFLOW_THEME_AUTO
+	DE	Automatisch (wie das Gerät)
+	EN	Automatic (like the device)
+
 PLUGIN_ALBUMFLOW_THEME_GLASS
-	DE	Glas
-	EN	Glass
+	DE	Für Home Assistant (eingebettet)
+	EN	For Home Assistant (embedded)
 
 PLUGIN_ALBUMFLOW_LANG
 	DE	Sprache
@@ -59,9 +67,53 @@ PLUGIN_ALBUMFLOW_IDLE
 	EN	Screensaver (seconds)
 
 PLUGIN_ALBUMFLOW_IDLE_DESC
-	DE	Während Musik läuft und niemand das Gerät berührt, öffnet sich nach so vielen Sekunden die grosse Jetzt-läuft-Ansicht. 0 = aus, leer = Standard (Glas 30, sonst aus).
-	EN	While music plays and nobody touches the device, the large now-playing view opens after this many seconds. 0 = off, empty = default (glass 30, otherwise off).
+	DE	Während Musik läuft und niemand das Gerät berührt, öffnet sich nach so vielen Sekunden die grosse Jetzt-läuft-Ansicht. 0 = aus, leer = Standard (Home Assistant 30, sonst aus).
+	EN	While music plays and nobody touches the device, the large now-playing view opens after this many seconds. 0 = off, empty = default (Home Assistant 30, otherwise off).
 
 PLUGIN_ALBUMFLOW_URL_NOTE
-	DE	Für einzelne Geräte lassen sich diese Einstellungen in der Adresse überschreiben: ?theme=glas, ?lang=en, ?idle=60, und ?player=Name wählt den Player vor.
-	EN	For a single device these settings can be overridden in the address: ?theme=glas, ?lang=en, ?idle=60, and ?player=Name preselects the player.
+	DE	Für einzelne Geräte lassen sich diese Einstellungen in der Adresse überschreiben: ?theme=ha|light|dark, ?lang=en, ?idle=60, ?colors=0, ?color=blue, und ?player=Name wählt den Player vor.
+	EN	For a single device these settings can be overridden in the address: ?theme=ha|light|dark, ?lang=en, ?idle=60, ?colors=0, ?color=blue, and ?player=Name preselects the player.
+
+PLUGIN_ALBUMFLOW_COLORS
+	DE	Farben aus dem Cover
+	EN	Colours from the cover
+
+PLUGIN_ALBUMFLOW_COLORS_DESC
+	DE	Hell/Dunkel: die Akzentfarbe (Knöpfe, Markierungen, Hintergrund der Jetzt-läuft-Ansicht) passt sich dem Cover des laufenden Titels an.
+	EN	Light/dark: the accent colour (buttons, highlights, background of the now-playing view) follows the cover of the playing track.
+
+PLUGIN_ALBUMFLOW_HACOLOR
+	DE	Farbe (Home-Assistant-Design)
+	EN	Colour (Home Assistant theme)
+
+PLUGIN_ALBUMFLOW_HACOLOR_DESC
+	DE	Feste Akzentfarbe für das Home-Assistant-Design, passend zum Dashboard.
+	EN	Fixed accent colour for the Home Assistant theme, to match the dashboard.
+
+PLUGIN_ALBUMFLOW_C_VIOLET
+	DE	Violett
+	EN	Violet
+
+PLUGIN_ALBUMFLOW_C_BLUE
+	DE	Blau
+	EN	Blue
+
+PLUGIN_ALBUMFLOW_C_TEAL
+	DE	Türkis
+	EN	Teal
+
+PLUGIN_ALBUMFLOW_C_GREEN
+	DE	Grün
+	EN	Green
+
+PLUGIN_ALBUMFLOW_C_ORANGE
+	DE	Orange
+	EN	Orange
+
+PLUGIN_ALBUMFLOW_C_RED
+	DE	Rot
+	EN	Red
+
+PLUGIN_ALBUMFLOW_C_PINK
+	DE	Pink
+	EN	Pink
