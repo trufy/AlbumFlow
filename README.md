@@ -9,11 +9,13 @@ A touch-friendly web interface for [Lyrion Music Server](https://lyrion.org) (LM
 ## Features
 
 - 3D album flow with reflections, A–Z jump bar and position slider; swipe, mouse wheel or arrow keys
-- Tap the centre cover to flip it and see the tracks; play, add or insert the whole album or a single track
+- Tap the centre cover to flip it and see the tracks; play, add or insert the whole album; the ⋯ button on a track plays it next or adds it to the queue
 - Collections: albums, **artists** (one tile per artist: tap it and their albums slide into the flow, tap beside them to go back; artists with a single album open it right away), albums by artist, recently added, playlists
-- Search by album or artist
+- Search by album, artist or **song title** (albums containing the song appear in the flow, the track is highlighted when you flip the cover)
 - Player selection, volume, play/pause/skip, power, large now-playing view with the queue (tap the cover or title in the bottom bar; optional screensaver)
-- **Any source in the flow:** *My Music* (your local files), every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …) and *All* (the whole library). For a service its top folders appear under *Collection*; folders open in the flow, albums and playlists flip and play like albums
+- **Any source in the flow:** *My Music* (your local files), every music service plugin you have installed (Qobuz, Spotify via Spotty, Deezer, YouTube, …) and *All* (the whole library). For a service its top folders appear under *Collection*; folders open in the flow, albums and playlists flip and play like albums. A *Back* tile at both ends (or the browser/Android back button) goes up one level
+- **Radio** as a source: browse TuneIn and your radio plugins in the flow, with flags for countries and languages and cover mosaics for genres and regions
+- Opens from Lyrion: an *AlbumFlow* entry in the Material menu (under Settings) and under *Extras* in the classic web interface; the house button in AlbumFlow takes you back to Lyrion
 - **TIDAL extras** (with the official TIDAL plugin, nothing patched): favourite tracks in date-added order, your playlists, mixes, suggestions, full TIDAL search, track radio, heart button to add/remove favourites
 - Light, dark or automatic look; the accent colour follows the cover of the playing track
 - English and German interface (follows the browser language)
@@ -79,7 +81,7 @@ Happy to share the complete dashboard setup (theme, tablet layout): just ask in 
 
 ## Known limitations
 
-- Generic service browsing has been tested with TIDAL, YouTube and Sounds & Effects only. Reports for Qobuz, Spotty, Deezer and others are especially welcome.
+- Generic service browsing has been tested with TIDAL, YouTube and Radio (TuneIn) only. Reports for Qobuz, Spotty, Deezer and others are especially welcome.
 - Service search fields are not used yet; the search box filters what is shown in the flow (plus the full TIDAL catalogue for TIDAL).
 - Other languages than English and German are welcome as contributions.
 - Tested with Lyrion 9.x on Windows, TIDAL plugin 1.10, Chrome/Safari/Android WebView.
@@ -92,3 +94,5 @@ Happy to share the complete dashboard setup (theme, tablet layout): just ask in 
 ## Licence
 
 GPL-2.0, like Lyrion Music Server. See [LICENSE](LICENSE).
+
+Country flags: [flag-icons](https://github.com/lipis/flag-icons) by Panayiotis Lipiridis, MIT licence (see `HTML/AlbumFlow/html/flags/LICENSE.txt`).

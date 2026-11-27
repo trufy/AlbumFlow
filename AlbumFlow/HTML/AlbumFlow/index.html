@@ -9,6 +9,9 @@
 <meta name="theme-color" content="#0b0b0f">
 <title>AlbumFlow</title>
 <script>
+	// opened from a Lyrion skin page that uses frames (the classic interface's "Extras"): take
+	// the whole window. Embedded on another site (Home Assistant) the parent can't be read, so it stays.
+	try { if (window.top !== window.self && window.top.location.host === location.host && !/^\/AlbumFlow\//i.test(window.top.location.pathname)) window.top.location.href = location.href; } catch (e) {}
 	// settings from the plugin (Lyrion: Settings > Advanced > AlbumFlow), read before the page
 	// renders so the theme is right from the start; URL parameters override them per device
 	var AF_PREFS = {};
@@ -96,6 +99,8 @@ button { background: none; border: 0; cursor: pointer; }
 .cover img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 6px; background: #22222a;
 	box-shadow: 0 18px 40px rgba(0,0,0,.55);
 	-webkit-box-reflect: below 4px linear-gradient(transparent 62%, rgba(255,255,255,.22)); pointer-events: none; }
+html body .cover .ph.back { flex-direction: column; gap: 6%; color: var(--text, #eee); background: linear-gradient(135deg, rgba(var(--accent-rgb, 140,110,255),.35), rgba(var(--accent-rgb, 140,110,255),.12)); }
+html body .cover .ph.back b { font-size: 3.2em; line-height: 1; font-weight: 300; }
 .cover .ph { position: absolute; top: 0; right: 0; bottom: 0; left: 0; display: flex; align-items: center; justify-content: center; text-align: center; padding: 10%;
 	font-weight: 600; color: var(--muted); border-radius: 6px; background: linear-gradient(135deg, #2a2a33, #18181e); }
 .caption { position: absolute; left: 0; right: 0; bottom: 4%; text-align: center; padding: 0 20px; pointer-events: none; }
@@ -177,7 +182,7 @@ button { background: none; border: 0; cursor: pointer; }
 .pill.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
 .tracks { list-style: none; margin: 0; padding: 0 10px 10px; border-top: 1px solid var(--line); flex: 1; min-height: 0;
 	overflow-y: auto; -webkit-overflow-scrolling: touch; }
-.tracks li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 34px; align-items: center; gap: 8px; padding: 11px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 8px; }
+.tracks li { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto 34px 34px; align-items: center; gap: 8px; padding: 11px 6px; border-bottom: 1px solid var(--line); cursor: pointer; border-radius: 8px; }
 .tracks li span:nth-child(2) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rbtn { width: 32px; height: 32px; margin: -6px 0; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; color: var(--muted); }
 .rbtn:hover { background: rgba(255,255,255,.08); color: var(--accent); }
@@ -194,6 +199,11 @@ button { background: none; border: 0; cursor: pointer; }
 .tracks li.cur span:nth-child(2) { color: var(--accent); font-weight: 600; }
 .tracks li.disc { display: block; cursor: default; color: var(--accent); font-weight: 600; font-size: 13px; padding: 14px 6px 6px; }
 .tracks li.disc:hover { background: none; }
+.tracks li.acts { display: flex; justify-content: flex-end; gap: 8px; padding: 2px 6px 10px; cursor: default; border-bottom: 1px solid var(--line); }
+.tracks li.acts:hover { background: none; }
+.tracks li.acts button { padding: 7px 14px; border-radius: 18px; border: 1px solid var(--line); color: var(--text, inherit); font: inherit; font-size: 14px; background: rgba(var(--accent-rgb), .12); cursor: pointer; }
+.tracks li.acts button:hover { background: rgba(var(--accent-rgb), .25); }
+.tracks li.hit span:nth-child(2) { color: var(--accent); font-weight: 600; }
 .tracks .n, .tracks .d { color: var(--muted); font-variant-numeric: tabular-nums; }
 .toast { position: fixed; left: 50%; bottom: 110px; transform: translateX(-50%); background: var(--accent); color: var(--accent-ink);
 	padding: 10px 16px; border-radius: 20px; font-weight: 600; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 6000; }
@@ -300,6 +310,9 @@ select.ctl::-ms-expand { display: none; }
 #settings { display: inline-flex; align-items: center; justify-content: center; width: 38px; padding: 0; color: var(--muted); text-decoration: none; }
 #settings svg { width: 20px; height: 20px; fill: currentColor; }
 html.glas #settings { display: none; }
+#lyrion { display: inline-flex; align-items: center; justify-content: center; width: 38px; padding: 0; color: var(--muted); text-decoration: none; }
+#lyrion svg { width: 20px; height: 20px; fill: currentColor; }
+html.glas #lyrion { display: none; }
 /* the accent-coloured buttons keep their colour on hover (only a little brighter) */
 html body .ib.big:hover, html body .pill.primary:hover { background: var(--accent); filter: brightness(1.1); }
 /* Light: the default theme in light mode (setting "Hell", or "Automatisch" on a light device) */
@@ -373,7 +386,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 <body>
 <div class="app">
 	<header class="top">
-		<input id="search" class="ctl" type="search" placeholder="Album oder Künstler suchen" autocomplete="off">
+		<input id="search" class="ctl" type="search" placeholder="Album, Künstler oder Titel suchen" autocomplete="off">
 		<select id="src" class="ctl" title="Quelle">
 			<option value="local">Meine Musik</option>
 			<option value="tidal">TIDAL</option>
@@ -393,6 +406,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		<button id="dir" class="ctl" title="Reihenfolge umkehren"><svg viewBox="0 0 24 24"><path d="M11 4h2v12l5.5-5.5 1.42 1.42L12 19.84l-7.92-7.92L5.5 10.5 11 16z"/></svg></button>
 		<select id="player" class="ctl" title="Player"></select>
 		<button id="power" class="ctl" title="Player ein/aus"><svg viewBox="0 0 24 24"><path d="M13 3h-2v10h2V3zm4.83 2.17-1.42 1.42A6.92 6.92 0 0 1 19 12a7 7 0 1 1-11.42-5.42L6.17 5.17A8.93 8.93 0 0 0 3 12a9 9 0 0 0 18 0c0-2.74-1.23-5.18-3.17-6.83z"/></svg></button>
+		<a id="lyrion" class="ctl" href="/" title="Lyrion öffnen"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg></a>
 		<a id="settings" class="ctl" href="/plugins/AlbumFlow/settings/basic.html" target="_blank" rel="noopener" title="Einstellungen"><svg viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.31.06-.62.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84a.48.48 0 0 0-.48.41l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.74 8.87a.49.49 0 0 0 .12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.48-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.03-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z"/></svg></a>
 	</header>
 
@@ -463,7 +477,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	// ---------- Language ----------
 	// German or English, from ?lang=de|en or the browser language
 	var LANG = ((location.search.match(/[?&]lang=([a-z]{2})/) || [])[1] || window.AF_PREFS && AF_PREFS.lang || (navigator.language || 'en').slice(0, 2)).toLowerCase() === 'de' ? 'de' : 'en';
-	var EN = {"Album oder Künstler suchen": "Search album or artist", "Quelle": "Source", "Alle": "All", "Lokal": "Local", "Sammlung": "Collection", "Alben": "Albums", "Künstler": "Artists", "Neueste": "Newest", "Titel": "Tracks", "Vorschläge": "Suggestions", "Reihenfolge umkehren": "Reverse order", "Player ein/aus": "Player on/off", "Lade Alben …": "Loading albums …", "Alben durchblättern": "Browse albums", "Zum aktuellen Album springen": "Jump to the current album", "Von TIDAL als KI-generiert markiert": "Flagged as AI generated by TIDAL", "Zurück": "Back", "Weiter": "Next", "Zu TIDAL-Favoriten hinzufügen": "Add to TIDAL favourites", "Aus TIDAL-Favoriten entfernen": "Remove from TIDAL favourites", "Titelradio": "Track radio", "Lautstärke": "Volume", "Leiser": "Quieter", "Lauter": "Louder", "Zurück zum Cover Flow": "Back to the flow", "Wiedergabeliste": "Queue", "Position im Titel": "Position in track", "Zurückdrehen": "Turn back", "▶ Abspielen": "▶ Play", "Als Nächstes": "Play next", "Anhängen": "Add", "Keine Titel": "No tracks", "Lade Titel …": "Loading tracks …", "Wiedergabeliste ist leer": "The queue is empty", "Album in TIDAL nicht verfügbar": "Album not available on TIDAL", "Angehängt": "Added", "Bitte zuerst einen Player wählen": "Please choose a player first", "Eigene Playlist": "Own playlist", "Favorit": "Favourite", "Keine Alben gefunden": "No albums found", "Keine Lieblingssongs": "No favourite tracks", "Keine Treffer": "No matches", "Kommt als Nächstes": "Plays next", "Lade Meine Lieder …": "Loading My Tracks …", "Lyrion nicht erreichbar": "Lyrion not reachable", "Nichts in der Wiedergabeliste": "Nothing in the queue", "Ohne Namen": "Untitled", "Suche in TIDAL …": "Searching TIDAL …", "TIDAL Titelradio": "TIDAL track radio", "aus der TIDAL-Suche": "from TIDAL search", "Meine Lieder": "My Tracks", "Lade …": "Loading …", "Hier gibt es nichts anzuzeigen": "Nothing to show here", "Bibliotheken": "Libraries", "Einstellungen": "Settings", "Alben nach Künstler": "Albums by artist", "Alle Künstler": "All artists", "%s Alben": "%s albums", "1 Album": "1 album", "Zuletzt hinzugefügt": "Recently added", "Meine Musik": "My Music", "Dienste": "Services", "Spielt auf %s": "Playing on %s", "Lade %s …": "Loading %s …", "Keine %s": "No %s", "%s gibt es nur aus TIDAL": "%s are only available from TIDAL", "%s ist leer oder nicht verfügbar": "%s is empty or not available", "%s Titel": "%s tracks", "hinzugefügt %s": "added %s", "geändert %s": "changed %s", "Titelradio: %s": "Track radio: %s", "Player: %s": "Player: %s", "CD %s": "Disc %s"};
+	var EN = {"Album, Künstler oder Titel suchen": "Search album, artist or track", "Quelle": "Source", "Alle": "All", "Lokal": "Local", "Sammlung": "Collection", "Alben": "Albums", "Künstler": "Artists", "Neueste": "Newest", "Titel": "Tracks", "Vorschläge": "Suggestions", "Reihenfolge umkehren": "Reverse order", "Player ein/aus": "Player on/off", "Lade Alben …": "Loading albums …", "Alben durchblättern": "Browse albums", "Zum aktuellen Album springen": "Jump to the current album", "Von TIDAL als KI-generiert markiert": "Flagged as AI generated by TIDAL", "Zurück": "Back", "Weiter": "Next", "Zu TIDAL-Favoriten hinzufügen": "Add to TIDAL favourites", "Aus TIDAL-Favoriten entfernen": "Remove from TIDAL favourites", "Titelradio": "Track radio", "Lautstärke": "Volume", "Leiser": "Quieter", "Lauter": "Louder", "Zurück zum Cover Flow": "Back to the flow", "Wiedergabeliste": "Queue", "Position im Titel": "Position in track", "Zurückdrehen": "Turn back", "▶ Abspielen": "▶ Play", "Als Nächstes": "Play next", "Anhängen": "Add", "Keine Titel": "No tracks", "Lade Titel …": "Loading tracks …", "Wiedergabeliste ist leer": "The queue is empty", "Album in TIDAL nicht verfügbar": "Album not available on TIDAL", "Angehängt": "Added", "Bitte zuerst einen Player wählen": "Please choose a player first", "Eigene Playlist": "Own playlist", "Favorit": "Favourite", "Keine Alben gefunden": "No albums found", "Keine Lieblingssongs": "No favourite tracks", "Keine Treffer": "No matches", "Kommt als Nächstes": "Plays next", "Lade Meine Lieder …": "Loading My Tracks …", "Lyrion nicht erreichbar": "Lyrion not reachable", "Nichts in der Wiedergabeliste": "Nothing in the queue", "Ohne Namen": "Untitled", "Suche in TIDAL …": "Searching TIDAL …", "TIDAL Titelradio": "TIDAL track radio", "aus der TIDAL-Suche": "from TIDAL search", "Meine Lieder": "My Tracks", "Lade …": "Loading …", "Hier gibt es nichts anzuzeigen": "Nothing to show here", "Bibliotheken": "Libraries", "Einstellungen": "Settings", "Alben nach Künstler": "Albums by artist", "Alle Künstler": "All artists", "%s Alben": "%s albums", "1 Album": "1 album", "Zuletzt hinzugefügt": "Recently added", "Meine Musik": "My Music", "Dienste": "Services", "Spielt auf %s": "Playing on %s", "Lade %s …": "Loading %s …", "Keine %s": "No %s", "%s gibt es nur aus TIDAL": "%s are only available from TIDAL", "%s ist leer oder nicht verfügbar": "%s is empty or not available", "%s Titel": "%s tracks", "hinzugefügt %s": "added %s", "geändert %s": "changed %s", "Titelradio: %s": "Track radio: %s", "Player: %s": "Player: %s", "CD %s": "Disc %s", "zu allen Künstlern": "to all artists", "zu %s": "to %s", "Radio": "Radio", "mit „%s“": "with “%s”", "Lyrion öffnen": "Open Lyrion", "Mehr": "More"};
 	function L(s) { return LANG === 'de' ? s : (EN[s] || s); }
 	document.documentElement.lang = LANG;
 	if (LANG !== 'de') {
@@ -489,6 +503,26 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			localStorage.setItem('mflow.' + key, val);
 		} catch (e) { return null; }
 	}
+
+	// Instant start: the last list of a view is kept on the device and shown right away; the fresh
+	// list from Lyrion replaces it when it arrives, but only if it changed (no flicker).
+	function cacheGet(key) {
+		try { var s = localStorage.getItem('mflow.cache.' + key); return s ? JSON.parse(s) : null; } catch (e) { return null; }
+	}
+	function cachePut(key, data) { // returns false if the stored list was already identical
+		var k = 'mflow.cache.' + key, s = JSON.stringify(data);
+		try {
+			if (localStorage.getItem(k) === s) return false;
+			localStorage.setItem(k, s);
+		} catch (e) { // quota: drop all cached lists, then try once more
+			try {
+				Object.keys(localStorage).forEach(function (x) { if (x.indexOf('mflow.cache.') === 0) localStorage.removeItem(x); });
+				localStorage.setItem(k, s);
+			} catch (e2) {}
+		}
+		return true;
+	}
+	function curId(fallback) { return list.length ? list[Math.round(pos)].id : fallback; }
 
 	function coverUrl(a, size) {
 		if (a.coverData) return a.coverData;
@@ -552,6 +586,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		} else {
 			addPlaceholder(n, a);
 			if (a.playlist || a.mix || a.lpl) buildMosaic(a);
+			else if (a.svc && a.folder) folderArt(a);
 		}
 		if (isTidal(a)) n.appendChild(tidalBadge());
 		var eq = document.createElement('span');
@@ -593,10 +628,153 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			});
 		}).catch(function () {});
 	}
+	// Service / radio folder without an image (countries, regions, genres ...): a 2x2 mosaic of
+	// the station logos or covers inside, looking one folder deeper ("All stations") where needed.
+	// Only for covers that are actually built, two at a time, nearest to the centre first.
+	var artCache = {}, artQueue = [], artBusy = 0;
+	function artSrc(u, px) {
+		var m = /^\/?imageproxy\/([^/]+)\//.exec(u);
+		if (m) return '/imageproxy/' + m[1] + '/image_' + px + 'x' + px + '_o';
+		if (/^https?:/.test(u)) return '/imageproxy/' + encodeURIComponent(u) + '/image_' + px + 'x' + px + '_o';
+		return u.charAt(0) === '/' || /^html\/flags\//.test(u) ? u : '/' + u;
+	}
+	function folderImages(cmd, id, depth) {
+		return rpc(player, [cmd, 'items', 0, 40].concat(id ? ['item_id:' + id] : [])).then(function (r) {
+			var items = r.loop_loop || [], seen = {}, imgs = [];
+			// a folder of countries (a continent): four of their flags
+			if (svc.cmd === 'radio') {
+				var fl = items.map(function (x) { return +x.hasitems === 1 ? flagFor(x.name) : ''; }).filter(Boolean);
+				if (fl.length >= 4 && fl.length > items.length / 2) return fl.slice(0, 4);
+			}
+			items.forEach(function (x) { if (x.image && !seen[x.image] && imgs.length < 4) { seen[x.image] = 1; imgs.push(x.image); } });
+			if (imgs.length >= 4 || depth >= 4) return imgs;
+			var sub = null;
+			items.forEach(function (x) { if (!sub && +x.hasitems === 1 && /^(alle?|all)\b|beliebt|popular|sender|station/i.test(x.name || '')) sub = x; });
+			items.forEach(function (x) { if (!sub && +x.hasitems === 1 && x.type !== 'search') sub = x; });
+			if (!sub) return imgs;
+			return folderImages(cmd, sub.id, depth + 1).then(function (more) {
+				more.forEach(function (u) { if (!seen[u] && imgs.length < 4) { seen[u] = 1; imgs.push(u); } });
+				return imgs;
+			});
+		});
+	}
+	function folderArt(a) {
+		var key = a.id;
+		if (artCache[key] === '' || a.artTried) return;
+		if (artCache[key]) { a.coverData = artCache[key]; setTimeout(function () { redrawCover(a); }, 0); return; }
+		a.artTried = true;
+		artQueue.push(a);
+		artNext();
+	}
+	function artNext() {
+		while (artBusy < 2 && artQueue.length) {
+			var c = Math.round(pos);
+			artQueue.sort(function (x, y) { return Math.abs(list.indexOf(y) - c) - Math.abs(list.indexOf(x) - c); });
+			var a = artQueue.pop();
+			if (list.indexOf(a) < 0) { a.artTried = false; continue; } // left the flow meanwhile
+			artBusy++;
+			artBuild(a).then(function () { artBusy--; artNext(); });
+		}
+	}
+	function artBuild(a) {
+		var key = a.id;
+		return folderImages(a.svcCmd, a.svcId, 1).then(function (imgs) {
+			if (!imgs.length) { artCache[key] = ''; return; }
+			if (imgs.length < 4) imgs = [imgs[0]];
+			var S = 500, cv = document.createElement('canvas'), ctx = cv.getContext('2d');
+			cv.width = cv.height = S;
+			ctx.fillStyle = '#fff';
+			ctx.fillRect(0, 0, S, S);
+			return Promise.all(imgs.map(function (u, k) {
+				return new Promise(function (done) {
+					var img = new Image(), one = imgs.length === 1, px = one ? S : S / 2;
+					img.onload = img.onerror = function () {
+						if (img.naturalWidth) ctx.drawImage(img, one ? 0 : (k % 2) * px, one ? 0 : Math.floor(k / 2) * px, px, px);
+						done();
+					};
+					img.src = artSrc(u, px);
+				});
+			})).then(function () {
+				try { artCache[key] = a.coverData = cv.toDataURL('image/jpeg', 0.85); } catch (e) { artCache[key] = ''; return; }
+				redrawCover(a);
+			});
+		}).catch(function () { a.artTried = false; });
+	}
+	function redrawCover(a) {
+		var idx = list.indexOf(a);
+		if (idx >= 0 && nodes[idx]) { nodes[idx].remove(); delete nodes[idx]; render(); }
+	}
+	// Radio countries get their flag (square flags from flag-icons, MIT, in html/flags/): the folder
+	// name is matched against the country names the browser knows in German, English and its own language
+	var flagNames = null;
+	function flagFor(name) {
+		if (!flagNames) {
+			flagNames = {};
+			var langs = ['de', 'en'].concat(navigator.languages || [navigator.language || 'en']);
+			try {
+				langs.forEach(function (lg) {
+					var dn = new Intl.DisplayNames([lg], { type: 'region' });
+					for (var i = 0; i < 26; i++) for (var j = 0; j < 26; j++) {
+						var cc = String.fromCharCode(65 + i, 65 + j), n;
+						try { n = dn.of(cc); } catch (e) { continue; }
+						if (n && n !== cc && FLAGS.indexOf(cc.toLowerCase()) >= 0) flagNames[flagKey(n)] = cc.toLowerCase();
+					}
+				});
+			} catch (e) {}
+			// older names radio directories (TuneIn) still use
+			Object.keys(FLAG_ALIAS).forEach(function (k) { flagNames[flagKey(k)] = FLAG_ALIAS[k]; });
+		}
+		var cc = flagNames[flagKey(name)];
+		return cc ? 'html/flags/' + cc + '.svg' : '';
+	}
+	// Languages ("By language"): the flag of the language's main country, as the browser's locale
+	// data knows it (de -> DE, pt -> BR ...), with a few corrections and names radio directories use
+	var langNames = null;
+	var LANG_REGION = { en: 'gb', pt: 'pt', ar: 'sa', sv: 'se', da: 'dk', el: 'gr', ga: 'ie', cy: 'gb-wls', ca: 'es', eu: 'es', gl: 'es', ku: '', ug: '', bo: '', ber: '', se: '' };
+	var LANG_ALIAS = { 'Holländisch': 'nl', 'Flämisch': 'be', 'Flemish': 'be', 'Kantonesisch': 'hk', 'Cantonese': 'hk', 'Kambodscha': 'kh',
+		'Kanada': 'in', 'Kannada': 'in', 'Myanmar': 'mm', 'Rumantsch': 'ch', 'Romansh': 'ch', 'Slovakisch': 'sk', 'Slovenisch': 'si',
+		'Uzbekisch': 'uz', 'Weißrussisch': 'by', 'Bokmål': 'no', 'Haitisch': 'ht', 'Papiamentu': 'cw', 'Dari': 'af', 'Fidschianisch': 'fj',
+		'Bengali': 'bd', 'Chichewa': 'mw', 'Galizisch': 'es', 'Kashmiri': 'in', 'Tagalog': 'ph', 'Tamilisch': 'in', 'Bashkirisch': 'ru', 'Hawaiisch': 'us' };
+	function langFlagFor(name) {
+		if (!langNames) {
+			langNames = {};
+			var langs = ['de', 'en'].concat(navigator.languages || [navigator.language || 'en']);
+			try {
+				langs.forEach(function (lg) {
+					var dn = new Intl.DisplayNames([lg], { type: 'language' });
+					for (var i = 0; i < 26; i++) for (var j = 0; j < 26; j++) {
+						var lc = String.fromCharCode(97 + i, 97 + j), n, rg;
+						try { n = dn.of(lc); } catch (e) { continue; }
+						if (!n || n === lc) continue;
+						rg = lc in LANG_REGION ? LANG_REGION[lc] : '';
+						if (!(lc in LANG_REGION)) try { rg = (new Intl.Locale(lc).maximize().region || '').toLowerCase(); } catch (e) {}
+						if (rg && FLAGS.indexOf(rg) >= 0 || /-/.test(rg)) langNames[flagKey(n)] = rg;
+					}
+				});
+			} catch (e) {}
+			Object.keys(LANG_ALIAS).forEach(function (k) { langNames[flagKey(k)] = LANG_ALIAS[k]; });
+		}
+		var cc = langNames[flagKey(name)];
+		return cc ? 'html/flags/' + cc + '.svg' : '';
+	}
+	function flagKey(n) {
+		n = String(n || '').toLowerCase();
+		try { n = n.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); } catch (e) {}
+		return n.replace(/ß/g, 'ss').replace(/\b(und|and|&)\b/g, '').replace(/[^a-z]/g, '');
+	}
+	var FLAG_ALIAS = { 'DR Kongo': 'cd', 'Kongo': 'cg', 'Elfenbeinküste': 'ci', 'Ivory Coast': 'ci', 'Kap Verden': 'cv',
+		'Sao Tome-Principe': 'st', 'Swasiland': 'sz', 'Swaziland': 'sz', 'Kirgistan': 'kg', 'Ost-Timor': 'tl', 'East Timor': 'tl',
+		'Amerikanisch Samoa': 'as', 'Salomon-Inseln': 'sb', 'Wallis-Futuna-Inseln': 'wf', 'Großbritannien': 'gb',
+		'Great Britain': 'gb', 'England': 'gb-eng', 'Schottland': 'gb-sct', 'Scotland': 'gb-sct', 'Wales': 'gb-wls',
+		'Mazedonien': 'mk', 'Macedonia': 'mk', 'Moldawien': 'md', 'Tschechische Republik': 'cz', 'Czech Republic': 'cz',
+		'Weißrussland': 'by', 'St. Pierre-Miquelon': 'pm', 'Falkland-Inseln': 'fk', 'Surinam': 'sr', 'Burma': 'mm',
+		'USA': 'us', 'Vereinigte Staaten': 'us', 'Holland': 'nl', 'Vatikan': 'va', 'Türkei': 'tr', 'Turkey': 'tr' };
+	var FLAGS = 'ad ae af ag ai al am ao aq ar as at au aw ax az ba bb bd be bf bg bh bi bj bl bm bn bo bq br bs bt bv bw by bz ca cc cd cf cg ch ci ck cl cm cn co cp cr cu cv cw cx cy cz de dg dj dk dm do dz ec ee eg eh er es et eu fi fj fk fm fo fr ga gb gd ge gf gg gh gi gl gm gn gp gq gr gs gt gu gw gy hk hm hn hr ht hu ic id ie il im in io iq ir is it je jm jo jp ke kg kh ki km kn kp kr kw ky kz la lb lc li lk lr ls lt lu lv ly ma mc md me mf mg mh mk ml mm mn mo mp mq mr ms mt mu mv mw mx my mz na nc ne nf ng ni nl no np nr nu nz om pa pc pe pf pg ph pk pl pm pn pr ps pt pw py qa re ro rs ru rw sa sb sc sd se sg sh si sj sk sl sm sn so sr ss st sv sx sy sz tc td tf tg th tj tk tl tm tn to tr tt tv tw tz ua ug um un us uy uz va vc ve vg vi vn vu wf ws xk xx ye yt za zm zw';
 	function addPlaceholder(n, a) {
 		var p = document.createElement('div');
 		p.className = 'ph';
-		p.textContent = a.album;
+		if (a.backTile) { p.className = 'ph back'; var ar = document.createElement('b'); ar.textContent = '‹'; p.appendChild(ar); p.appendChild(document.createTextNode(a.album)); }
+		else p.textContent = a.album;
 		n.appendChild(p);
 	}
 	// TIDAL albums imported via the online library carry an extid like "tidal:album:123"
@@ -719,8 +897,9 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (!d.moved) {
 			if (d.hit) {
 				var i = +d.hit.dataset.i;
-				if (i === Math.round(pos)) openAlbum(list[i]); else goTo(i);
-			} else if (!artistBack()) {
+				if (list[i] && list[i].backTile) navBack();
+				else if (i === Math.round(pos)) openAlbum(list[i]); else goTo(i);
+			} else if (!navBack()) {
 				goTo(Math.round(pos));
 			}
 			return;
@@ -743,7 +922,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 
 	document.addEventListener('keydown', function (e) {
 		if ($('sheetBg').classList.contains('open')) { if (e.key === 'Escape') closeAlbum(); return; }
-		if ((e.key === 'Escape' || e.key === 'Backspace') && e.target === stage && artistBack()) { e.preventDefault(); return; }
+		if ((e.key === 'Escape' || e.key === 'Backspace') && e.target === stage && navBack()) { e.preventDefault(); return; }
 		if (document.activeElement && /INPUT|SELECT/.test(document.activeElement.tagName) && document.activeElement.type !== 'range') return;
 		if (e.key === 'ArrowRight') { goTo(Math.round(target) + 1); e.preventDefault(); }
 		else if (e.key === 'ArrowLeft') { goTo(Math.round(target) - 1); e.preventDefault(); }
@@ -801,7 +980,8 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (a.module) return [a.tidalAlbum ? a.artist : a.sub, a.module].filter(Boolean).join(' · ');
 		if (a.mix) return [a.sub, 'Mix'].filter(Boolean).join(' · ');
 		if (a.playlist) return [a.mine ? L('Eigene Playlist') : L('Favorit'), a.tracks ? L('%s Titel').replace('%s', a.tracks) : '', long && a.updated ? L('geändert %s').replace('%s', fmtDate(a.updated)) : ''].filter(Boolean).join(' · ');
-		return [a.artist, a.year && a.year !== '0' && a.year !== 0 ? a.year : '', a.fromSearch ? L('aus der TIDAL-Suche') : ''].filter(Boolean).join(' · ');
+		return [a.artist, a.year && a.year !== '0' && a.year !== 0 ? a.year : '', a.fromSearch ? L('aus der TIDAL-Suche') : '',
+			a.hitTitle ? L('mit „%s“').replace('%s', a.hitTitle) : ''].filter(Boolean).join(' · ');
 	}
 	function fmtDate(iso) {
 		var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
@@ -828,6 +1008,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		var q = $('search').value.trim().toLowerCase();
 		var src = $('src').value;
 		list = all.filter(function (a) {
+			if (a.backTile) return true;
 			// (artist tiles are built from albums already filtered by source)
 			if (!a.artistTile && src === 'tidal' && !isTidal(a)) return false; // (playlists/songs: src is neither)
 			if (!a.artistTile && src === 'local' && isTidal(a)) return false;
@@ -843,9 +1024,54 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (keepAlbumId != null) {
 			for (var i = 0; i < list.length; i++) if (String(list[i].id) === String(keepAlbumId)) { idx = i; break; }
 		}
+		if (!idx && list.length > 1 && list[0].backTile) idx = 1; // start on the first real cover, not the back tile
 		goTo(idx, true);
 		if (!list.length && !(svcMode() && !all.length)) $('empty').textContent = svcMode() ? L('Keine Treffer') : (songsMode() || remoteMode()) && src === 'local' ? L('%s gibt es nur aus TIDAL').replace('%s', VIEW_NAMES[$('sort').value]) : q ? L('Keine Treffer') : songsMode() ? L('Keine Lieblingssongs') : remoteMode() ? L('Keine %s').replace('%s', VIEW_NAMES[$('sort').value]) : lplMode() ? L('Keine %s').replace('%s', 'Playlists') : L('Keine Alben gefunden');
+		titleSearch(q);
 		tidalSearch(q);
+	}
+	// Search also finds track titles: albums with a matching track join the flow after the album
+	// and artist hits, captioned with the track ("with “Song”")
+	var tlTimer = null, tlSeq = 0;
+	function titleSearch(q) {
+		clearTimeout(tlTimer);
+		var seq = ++tlSeq;
+		if (!q || q.length < 3 || specialMode() || svcMode()) return;
+		var src = $('src').value;
+		tlTimer = setTimeout(function () {
+			var cmd = ['titles', 0, 300, 'search:' + q, 'tags:e'];
+			if (libId) cmd.push('library_id:' + libId);
+			rpc('', cmd).then(function (r) {
+				if (seq !== tlSeq) return;
+				var first = {};
+				(r.titles_loop || []).forEach(function (t) {
+					if (t.album_id != null && !(t.album_id in first) && String(t.title || '').toLowerCase().indexOf(q) >= 0) first[t.album_id] = t.title;
+				});
+				var have = {};
+				list.forEach(function (a) { have[a.id] = 1; });
+				var extra = [];
+				all.forEach(function (a) {
+					if (have[a.id] || !(a.id in first) || a.backTile || a.artistTile) return;
+					if (src === 'tidal' && !isTidal(a) || src === 'local' && isTidal(a)) return;
+					var c = {}; for (var k in a) c[k] = a[k];
+					c.hitTitle = first[a.id];
+					extra.push(c);
+				});
+				if (!extra.length) return;
+				var at = list.length && list[Math.round(pos)] ? list[Math.round(pos)].id : null;
+				// before the TIDAL search results, which may have arrived already
+				var cut = list.length;
+				while (cut && list[cut - 1].fromSearch) cut--;
+				list = list.slice(0, cut).concat(extra, list.slice(cut));
+				clearNodes();
+				$('scrub').max = String(Math.max(0, list.length - 1));
+				buildLetters();
+				var idx = 0;
+				for (var i = 0; i < list.length; i++) if (list[i].id === at) { idx = i; break; }
+				goTo(idx, true);
+				$('empty').style.display = 'none';
+			}).catch(function () {});
+		}, 350);
 	}
 
 	// Full TIDAL search: after the library hits, albums from the whole TIDAL catalogue
@@ -876,17 +1102,24 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	}
 	function loadAlbums() {
 		var current = list.length && !list[0].song && !list[0].playlist ? list[Math.round(pos)].id : store('album');
-		$('empty').textContent = L('Lade Alben …');
-		all = []; applyFilter();
-		$('empty').textContent = L('Lade Alben …');
+		var ck = 'albums.' + $('sort').value + '.' + (libId || ''), cached = cacheGet(ck);
+		if (cached) { all = cached; applyFilter(current); }
+		else {
+			$('empty').textContent = L('Lade Alben …');
+			all = []; applyFilter();
+			$('empty').textContent = L('Lade Alben …');
+		}
 		var q = ['albums', 0, 99999, 'tags:jlayE', 'sort:' + $('sort').value];
 		if (libId) q.push('library_id:' + libId); // AlbumFlow setting, e.g. a library without online duplicates
-		var forSrc = $('src').value;
+		var forSrc = $('src').value, forSort = $('sort').value;
 		return rpc('', q).then(function (r) {
-			if (specialMode() || svcMode() || $('src').value !== forSrc) return;
-			all = r.albums_loop || [];
-			applyFilter(current);
-		}).catch(function () { $('empty').textContent = L('Lyrion nicht erreichbar'); });
+			if (specialMode() || svcMode() || $('src').value !== forSrc || $('sort').value !== forSort) return;
+			var fresh = r.albums_loop || [];
+			if (!cachePut(ck, fresh) && cached) return;
+			var keep = cached ? curId(current) : current;
+			all = fresh;
+			applyFilter(keep);
+		}).catch(function () { if (!all.length) $('empty').textContent = L('Lyrion nicht erreichbar'); });
 	}
 
 	// "Meine Lieder": the TIDAL favourite tracks of the selected player's account,
@@ -903,20 +1136,27 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	function loadSongs(force) {
 		if (!player) { all = []; applyFilter(); $('empty').textContent = L('Bitte zuerst einen Player wählen'); return; }
 		if (!force && songsFor === player) { sortSongs(); applyFilter(store('song')); return; }
-		all = []; applyFilter();
-		$('empty').textContent = L('Lade Meine Lieder …');
+		var ck = 'songs.' + player, cached = cacheGet(ck);
+		if (cached) { songs = cached; sortSongs(); applyFilter(store('song')); }
+		else {
+			all = []; applyFilter();
+			$('empty').textContent = L('Lade Meine Lieder …');
+		}
 		var forPlayer = player;
 		return rpc(player, ['albumflow', 'tidalfavs']).then(function (r) {
 			if (!songsMode() || player !== forPlayer) return;
-			if (r.error || !r.tracks_loop) { $('empty').textContent = r.error ? 'TIDAL: ' + r.error : L('Keine Lieblingssongs'); return; }
-			songs = r.tracks_loop.map(function (t) {
+			if (r.error || !r.tracks_loop) { if (!cached) $('empty').textContent = r.error ? 'TIDAL: ' + r.error : L('Keine Lieblingssongs'); return; }
+			var fresh = r.tracks_loop.map(function (t) {
 				return { id: 't' + t.id, tidalId: t.id, song: true, album: t.title, artist: t.artist, albumName: t.album,
 					duration: t.duration, cover: t.cover, added: t.added, ai: +t.ai === 1, extid: 'tidal:track:' + t.id };
 			});
 			songsFor = forPlayer;
+			if (!cachePut(ck, fresh) && cached) return;
+			var keep = cached ? curId(store('song')) : store('song');
+			songs = fresh;
 			sortSongs();
-			applyFilter(store('song'));
-		}).catch(function () { $('empty').textContent = L('Lyrion nicht erreichbar'); });
+			applyFilter(keep);
+		}).catch(function () { if (!all.length) $('empty').textContent = L('Lyrion nicht erreichbar'); });
 	}
 	// "Playlists": the TIDAL "My playlists" of the selected player's account (own + favourited),
 	// via the plugin's "albumflow tidalplaylists"; shown as covers like albums
@@ -1000,8 +1240,11 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		});
 	}
 	function svcEntry(cmd, x) {
-		return svcImage({ id: 'svc-' + x.id, svc: true, svcCmd: cmd, svcId: x.id, album: x.line1 || x.name || L('Ohne Namen'),
+		// (top items of xmlbrowser menus carry a session prefix that changes on every call)
+		var e = svcImage({ id: 'svc-' + cmd + '-' + String(x.id).replace(/^[0-9a-f]{8}\./, ''), svc: true, svcCmd: cmd, svcId: x.id, album: x.line1 || x.name || L('Ohne Namen'),
 			artist: x.line2, folder: !x.isaudio, track: x.isaudio && !x.hasitems }, x.image);
+		if (e.folder && !x.image && artCache[e.id]) e.coverData = artCache[e.id];
+		return e;
 	}
 	function svcKey() { var at = svc.path[svc.path.length - 1]; return 'svc.' + svc.cmd + '|' + (at ? at.id : ''); }
 	function buildSvcMenu() {
@@ -1015,14 +1258,25 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		svc.top.forEach(function (x) { add('f:' + x.id, x.line1 || x.name); });
 		sel.value = svc.path.length > 1 ? 'cur' : svc.path.length ? 'f:' + svc.path[0].id : '';
 	}
+	// "Radio": Lyrion's radio menus (TuneIn, presets, radio plugins ...) as the top folders; each
+	// of them is a command of its own, so below the top the folder's command is used
+	function radioTop() {
+		return rpc(player, ['radios', 0, 200]).then(function (r) {
+			return (r.radioss_loop || []).filter(function (x) { return x.cmd && !/search/.test(x.type || ''); }).map(function (x) {
+				return { id: x.cmd, name: x.name || x.cmd, line1: x.name || x.cmd, line2: '', image: x.icon || '', isaudio: false, hasitems: true };
+			});
+		});
+	}
 	function loadSvc() {
 		var cmd = $('src').value.slice(4);
 		if (!player) { all = []; applyFilter(); $('empty').textContent = L('Bitte zuerst einen Player wählen'); return; }
 		if (svc.cmd !== cmd) { svc.cmd = cmd; svc.top = []; svc.path = []; }
 		all = []; applyFilter();
 		$('empty').textContent = L('Lade …');
-		var forPlayer = player, at = svc.path[svc.path.length - 1];
-		return svcItems(cmd, at ? at.id : '').then(function (items) {
+		var forPlayer = player, at = svc.path[svc.path.length - 1], radio = cmd === 'radio';
+		var useCmd = radio && svc.path.length ? svc.path[0].id : cmd;
+		var itemId = radio ? (svc.path.length > 1 ? at.id : '') : at ? at.id : '';
+		return (radio && !at ? radioTop() : svcItems(useCmd, itemId)).then(function (items) {
 			if ($('src').value !== 'app:' + cmd || player !== forPlayer) return;
 			if (!at) {
 				// service opened: its top level becomes the menu, then open the remembered
@@ -1030,13 +1284,30 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 				svc.top = items.filter(function (x) { return !x.isaudio; });
 				var want = store('svctop.' + cmd), pick = null;
 				svc.top.forEach(function (x) { if (x.id === want) pick = x; });
-				if (!pick) svc.top.forEach(function (x) { if (!pick && /album|favou?rit|meine|my /i.test(x.name)) pick = x; });
+				if (!pick) svc.top.forEach(function (x) { if (!pick && (radio ? /^local$/.test(x.id) : /album|favou?rit|meine|my /i.test(x.name))) pick = x; });
 				if (!pick) pick = svc.top[0];
 				if (pick) { svc.path = [{ id: pick.id, name: pick.line1 || pick.name }]; buildSvcMenu(); return loadSvc(); }
 			}
 			buildSvcMenu();
-			all = items.map(function (x) { return svcEntry(cmd, x); });
-			applyFilter(store(svcKey()));
+			all = items.map(function (x) { return svcEntry(useCmd, x); });
+			// a list of countries (most folders are one): flags instead of logo mosaics; not for
+			// single matches like the US state Georgia among the regions
+			// (the same for a list of languages)
+			if (radio) [flagFor, langFlagFor].some(function (fn) {
+				var fl = all.map(function (a) { return a.folder && !a.cover && !a.coverData ? fn(a.album) : ''; });
+				if (fl.filter(Boolean).length <= all.length / 2) return false;
+				all.forEach(function (a, k) { if (fl[k]) a.coverData = fl[k]; });
+				return true;
+			});
+			// below the top folder: a "back" tile at both ends, like an artist's albums
+			var first = all.length ? all[0].id : null;
+			if (svc.path.length > 1) {
+				var up = L('zu %s').replace('%s', svc.path[svc.path.length - 2].name);
+				all.unshift({ id: 'back-a', backTile: true, album: L('Zurück'), artist: up });
+				all.push({ id: 'back-z', backTile: true, album: L('Zurück'), artist: up });
+				pushBackState();
+			} else dropArtistState();
+			applyFilter(store(svcKey()) || first);
 			if (!all.length) $('empty').textContent = L('Hier gibt es nichts anzuzeigen');
 		}).catch(function () { $('empty').textContent = L('Lyrion nicht erreichbar'); });
 	}
@@ -1045,6 +1316,14 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		svc.path.push({ id: a.svcId, name: a.album });
 		loadSvc();
 	}
+	function svcBack(fromHistory) {
+		if (!svcMode() || svc.path.length < 2) return false;
+		svc.path.pop();
+		loadSvc();
+		return true;
+	}
+	// one level back, wherever we are: an artist's albums or a service / radio folder
+	function navBack(fromHistory) { return artistBack(fromHistory) || svcBack(fromHistory); }
 	// Quelle menu: Meine Musik, every installed service (TIDAL with its own views), Alle.
 	// The library (e.g. without online duplicates) is an AlbumFlow setting in Lyrion.
 	function loadSources() {
@@ -1052,7 +1331,9 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			rpc('', ['apps', 0, 200]).catch(function () { return {}; }),
 			rpc('', ['pref', 'plugin.albumflow:library', '?']).catch(function () { return {}; })
 		]).then(function (r) {
-			apps = (r[0].appss_loop || []).filter(function (a) { return a.cmd; });
+			// Sounds & Effects make no sense in a cover flow; Radio (Lyrion's radio menus) does
+			apps = (r[0].appss_loop || []).filter(function (a) { return a.cmd && a.cmd !== 'sounds'; });
+			apps.push({ cmd: 'radio', name: L('Radio') });
 			apps.sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); });
 			hasTidal = apps.some(function (a) { return a.cmd === 'tidal'; });
 			libId = r[1]._p2 && r[1]._p2 !== '0' ? String(r[1]._p2) : '';
@@ -1125,7 +1406,13 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (artistSel) {
 			all = albums.filter(function (a) { return (a.artist || '') === artistSel; });
 			all.sort(function (x, y) { return (+x.year || 9999) - (+y.year || 9999) || String(x.album).localeCompare(String(y.album)); });
-			applyFilter(store('artalbum'));
+			// a "back" tile at both ends of the artist's albums: swiping to either end finds the way out
+			var first = all.length ? all[0].id : null;
+			['back-a', 'back-z'].forEach(function (id, k) {
+				var b = { id: id, backTile: true, album: L('Zurück'), artist: L('zu allen Künstlern') };
+				if (k) all.push(b); else all.unshift(b);
+			});
+			applyFilter(store('artalbum') || first);
 			return;
 		}
 		var by = {};
@@ -1191,10 +1478,28 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		var mine = srcAlbums().filter(function (a) { return (a.artist || '') === t.album; });
 		if (mine.length === 1) { openAlbum(mine[0]); return; }
 		turnStage(1, function () { artistSel = t.album; store('artalbum', ''); showArtists(); });
+		pushBackState();
 	}
-	// back to all artists: a tap next to the albums (like turning an album back) or Escape
-	function artistBack() {
+	// one history entry while we are below a top level (artist's albums, service sub folder)
+	function pushBackState() {
+		if (!(history.state && history.state.afArtist)) try { history.pushState({ afArtist: 1 }, ''); } catch (e) {}
+	}
+	// the Android / browser back button leaves the artist instead of the page; leaving the artist
+	// any other way takes our history entry back off, so the next back press isn't swallowed
+	var ignorePop = false;
+	function dropArtistState() {
+		if (history.state && history.state.afArtist) { ignorePop = true; history.back(); }
+	}
+	window.addEventListener('popstate', function () {
+		if (ignorePop) { ignorePop = false; return; }
+		if (artistSel) artistBack(true);
+		else svcBack(true); // loadSvc puts the entry back while still below the top
+	});
+	// back to all artists: the back tiles, a tap next to the albums (like turning an album back),
+	// Escape or the Android / browser back button
+	function artistBack(fromHistory) {
 		if (!artistSel || turning) return false;
+		if (!fromHistory) dropArtistState();
 		turnStage(-1, function () { artistSel = null; showArtists(); });
 		return true;
 	}
@@ -1232,7 +1537,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 	$('sort').addEventListener('change', function () {
 		if (svcMode()) {
 			var v = this.value;
-			if (v === 'back') { svc.path.pop(); loadSvc(); }
+			if (v === 'back') svcBack();
 			else if (v.indexOf('f:') === 0) {
 				var id = v.slice(2), name = this.options[this.selectedIndex].textContent;
 				store('svctop.' + svc.cmd, id);
@@ -1241,9 +1546,9 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			}
 			return;
 		}
-		if (this.value === 'artback') { artistSel = null; showArtists(); return; }
+		if (this.value === 'artback') { artistSel = null; dropArtistState(); showArtists(); return; }
 		if (this.value === 'artcur') return;
-		artistSel = null;
+		if (artistSel) { artistSel = null; dropArtistState(); }
 		store('view', this.value);
 		var wasAlbums = !/^(songs|playlists|mixes|home|lplaylists|artists)$/.test(lastView);
 		lastView = this.value;
@@ -1254,8 +1559,8 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		store('src', this.value);
 		var wasSvc = lastSrc.indexOf('app:') === 0, prevView = $('sort').value;
 		lastSrc = this.value;
-		if (svcMode()) { svc.cmd = ''; loadSvc(); return; }
-		artistSel = null;
+		if (svcMode()) { artistSel = null; svc.cmd = ''; loadSvc(); return; }
+		artistSel = null; dropArtistState();
 		setSortMenu(wasSvc ? store('view') : /^art(back|cur)$/.test(prevView) ? 'artists' : prevView);
 		lastView = $('sort').value;
 		if (wasSvc || $('sort').value !== prevView || specialMode()) { loadView(); return; }
@@ -1290,6 +1595,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (!a || flipBusy || openA) return;
 		if (a.svc && a.folder) { svcOpenFolder(a); return; }
 		if (a.artistTile) { openArtist(a); return; }
+		if (a.backTile) { navBack(); return; }
 		openA = a;
 		$('shPlayer').value = player;
 		if (a.svc) store(svcKey(), a.id);
@@ -1363,6 +1669,44 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		b.addEventListener('click', function (e) { e.stopPropagation(); startRadio(id, title, cover); });
 		return b;
 	}
+	// "⋯" on a track row: play next / add just this track (in a row below it)
+	var MORE_SVG = '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>';
+	function moreCell(play) {
+		var b = document.createElement('button');
+		b.className = 'rbtn';
+		b.title = L('Mehr');
+		b.innerHTML = MORE_SVG;
+		b.addEventListener('click', function (e) {
+			e.stopPropagation();
+			var li = b.parentNode, nx = li.nextSibling, open = nx && nx.classList && nx.classList.contains('acts');
+			Array.prototype.forEach.call(li.parentNode.querySelectorAll('li.acts'), function (x) { x.remove(); });
+			if (open) return;
+			var row = document.createElement('li');
+			row.className = 'acts';
+			[['insert', L('Als Nächstes')], ['add', L('Anhängen')]].forEach(function (h) {
+				var bt = document.createElement('button');
+				bt.textContent = h[1];
+				bt.addEventListener('click', function (ev) { ev.stopPropagation(); row.remove(); play(h[0]); });
+				row.appendChild(bt);
+			});
+			row.addEventListener('click', function (ev) { ev.stopPropagation(); });
+			li.parentNode.insertBefore(row, li.nextSibling);
+		});
+		return b;
+	}
+	function playTrack(a, tr, how) {
+		if (!player) { toast(L('Bitte zuerst einen Player wählen')); return; }
+		var cmd;
+		if (a.song) cmd = ['albumflow', 'tidalplay', 'cmd:' + how, 'ids:' + a.tidalId];
+		else if (a.tidalAlbum || a.playlist || a.mix || a.radio) cmd = ['albumflow', 'tidalplay', 'cmd:' + how, 'ids:' + tr.id];
+		else if (a.svc) cmd = [a.svcCmd, 'playlist', how, 'item_id:' + tr.id];
+		else if (a.lpl && !/^\d+$/.test(String(tr.id)) && tr.url) cmd = ['playlist', how === 'insert' ? 'insert' : 'add', tr.url];
+		else cmd = ['playlistcontrol', 'cmd:' + how, 'track_id:' + tr.id];
+		rpc(player, cmd).then(function () {
+			toast(how === 'insert' ? L('Kommt als Nächstes') : L('Angehängt'));
+			setTimeout(poll, 600);
+		});
+	}
 	function aiBadge() {
 		var b = document.createElement('i');
 		b.className = 'aib';
@@ -1394,6 +1738,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 		if (s.ai) tEl.appendChild(aiBadge());
 		var dEl = document.createElement('span'); dEl.className = 'd'; dEl.textContent = s.duration ? fmt(s.duration) : '';
 		li.appendChild(nEl); li.appendChild(tEl); li.appendChild(dEl); li.appendChild(radioCell(s.tidalId, s.album, s.cover));
+		li.appendChild(moreCell(function (how) { playTrack(s, null, how); }));
 		li.addEventListener('click', function () { playAlbum(s, 'load', i); });
 		return li;
 	}
@@ -1437,7 +1782,7 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 			if (a.tidalAlbum || a.playlist || a.mix || a.radio) a.trackIds = t.map(function (tr) { return tr.id; });
 			var discs = {};
 			t.forEach(function (tr) { discs[tr.disc || 1] = 1; });
-			var multiDisc = Object.keys(discs).length > 1, lastDisc = null, aiRows = [];
+			var multiDisc = Object.keys(discs).length > 1, lastDisc = null, aiRows = [], hitLi = null;
 			ul.innerHTML = '';
 			t.forEach(function (tr, i) {
 				if (multiDisc && tr.disc !== lastDisc) {
@@ -1454,10 +1799,14 @@ html.glas .np:not(.open) .info .t { font-size: 13.5px; font-weight: 700; }
 				else if (!(a.tidalAlbum || a.playlist || a.mix || a.radio) && tidalIdOf(tr, a)) aiRows.push([tidalIdOf(tr, a), tEl]);
 				var dEl = document.createElement('span'); dEl.className = 'd'; dEl.textContent = tr.duration ? fmt(tr.duration) : '';
 				li.appendChild(nEl); li.appendChild(tEl); li.appendChild(dEl); li.appendChild(radioCell(tidalIdOf(tr, a), tr.title, tr.cover || coverUrl(a, 500)));
+				li.appendChild(moreCell(function (how) { playTrack(a, tr, how); }));
 				li.addEventListener('click', function () { playAlbum(a, 'load', i); });
+				// the track the search found: marked and scrolled into view
+				if (a.hitTitle && tr.title === a.hitTitle && !hitLi) { li.className = 'hit'; hitLi = li; }
 				ul.appendChild(li);
 			});
 			if (!t.length) ul.innerHTML = '<li><span></span><span style="color:var(--muted)">' + L('Keine Titel') + '</span><span></span></li>';
+			if (hitLi) ul.scrollTop = Math.max(0, hitLi.offsetTop - ul.offsetTop - 60);
 			markAi(aiRows, function () { return openA === a; }); // TIDAL albums from the library
 		});
 	}

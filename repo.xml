@@ -4,18 +4,18 @@
 		<title lang="EN">AlbumFlow (beta)</title>
 	</details>
 	<plugins>
-		<plugin name="AlbumFlow" version="0.9.11" minTarget="8.0" maxTarget="*">
+		<plugin name="AlbumFlow" version="0.9.12" minTarget="8.0" maxTarget="*">
 			<title lang="EN">AlbumFlow (beta)</title>
 			<title lang="DE">AlbumFlow (Beta)</title>
 			<desc lang="EN">Touch-friendly web interface with a 3D album flow. Open http://&lt;server&gt;:9000/AlbumFlow/ after installing.</desc>
 			<desc lang="DE">Touch-Oberfläche mit 3D-Albumansicht. Nach der Installation unter http://&lt;server&gt;:9000/AlbumFlow/ aufrufen.</desc>
-			<changes lang="EN">0.9.11: Artists use the order and sort letters from Lyrion (honours ARTISTSORT and ignored articles); A–Z bar in Artists and Playlists.</changes>
-			<changes lang="DE">0.9.11: Künstler in der Reihenfolge und mit den Sortierbuchstaben von Lyrion (beachtet ARTISTSORT und ignorierte Artikel); A–Z-Leiste bei Künstler und Playlists.</changes>
+			<changes lang="EN">0.9.12: Radio as a source with flags for countries and languages and cover mosaics for folders; search also finds song titles (shows the albums containing them); play next / add a single track (⋯ in the track list); Back tiles and browser back in service and radio folders; AlbumFlow entry in the Material menu (Settings) and under Extras in the classic web UI, plus a house button back to Lyrion; faster reopening of lists.</changes>
+			<changes lang="DE">0.9.12: Radio als Quelle mit Flaggen für Länder und Sprachen und Mosaik-Covern für Ordner; die Suche findet auch Songtitel (zeigt die Alben dazu); einzelnen Titel als Nächstes spielen / anhängen (⋯ in der Titelliste); Zurück-Kacheln und Browser-Zurück in Dienst- und Radio-Ordnern; AlbumFlow-Eintrag im Material-Menü (Einstellungen) und unter Extras in der klassischen Oberfläche, dazu ein Haus-Knopf zurück zu Lyrion; Listen öffnen schneller.</changes>
 			<creator>Stephane Duvoisin</creator>
 			<category>misc</category>
 			<link>https://github.com/trufy/AlbumFlow</link>
-			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.11/AlbumFlow-0.9.11.zip</url>
-			<sha>49c6e262417afd421a903dc0625552a7d472e50c</sha>
+			<url>https://github.com/trufy/AlbumFlow/releases/download/v0.9.12/AlbumFlow-0.9.12.zip</url>
+			<sha>8ad564e7fa09f73643f633c92882215afb62de11</sha>
 		</plugin>
 	</plugins>
 </extensions>

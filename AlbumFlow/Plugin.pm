@@ -41,6 +41,8 @@ sub initPlugin {
 	if (main::WEBUI) {
 		require Plugins::AlbumFlow::Settings;
 		Plugins::AlbumFlow::Settings->new;
+		# entry in the menu of Lyrion's standard web interface ("Extras")
+		Slim::Web::Pages->addPageLinks('plugins', { 'PLUGIN_ALBUMFLOW' => '/AlbumFlow/index.html' });
 	}
 
 	Slim::Control::Request::addDispatch(['albumflow', 'prefs'], [0, 1, 0, \&_prefs]);
@@ -61,6 +63,22 @@ sub initPlugin {
 # <player> albumflow tidalai ids:<id,id,...>
 #   which of these TIDAL tracks TIDAL flags as AI generated ("ai": true in the
 #   track data). Answers ai:<comma separated ids> (empty if none).
+# Material: AlbumFlow in its menu, under "Settings" (Material's API for other plugins; its "system"
+# section isn't shown by Material 6.5)
+sub postinitPlugin {
+	return unless main::WEBUI;
+	return unless Slim::Utils::PluginManager->isEnabled('Plugins::MaterialSkin::Plugin');
+	return unless Plugins::MaterialSkin::Plugin->can('registerCustomAction');
+	eval {
+		Plugins::MaterialSkin::Plugin::registerCustomAction('settings', {
+			title    => 'AlbumFlow',
+			icon     => 'view_carousel',
+			script   => "window.location.href='/AlbumFlow/'",
+		});
+	};
+	$@ && $log->error("Material menu entry: $@");
+}
+
 sub _tidalAi {
 	my $request = shift;
 	my $api = _tidalApi($request->client);
